@@ -1,0 +1,29 @@
+# modules.yaml — module registry (catalog). Status reflects what is present in
+# the repo today; `planned` modules are referenced by profiles but their
+# sources are not yet authored (the installer skips them with a note).
+
+modules:
+  - {id: core, status: present, owner: yulianPerelshtein, summary: "always-loaded core (CLAUDE, skills, agents, styles, hooks)"}
+  - {id: skills/custom, status: present, owner: yulianPerelshtein, summary: "user-authored skills (learning-mode)"}
+  - {id: learnings/distilled, status: present, owner: yulianPerelshtein, summary: "distilled cross-project lessons"}
+  - {id: all-domains, status: present, owner: yulianPerelshtein, summary: "all paths-scoped domain skills"}
+  - {id: all-playbooks, status: present, owner: yulianPerelshtein, summary: "all on-demand playbooks"}
+  - {id: all-templates, status: present, owner: yulianPerelshtein, summary: "per-project starter files"}
+  - {id: domains/python, status: present, owner: yulianPerelshtein, summary: "Python domain"}
+  - {id: domains/cloud-aws, status: present, owner: yulianPerelshtein, summary: "AWS domain"}
+  - {id: domains/testing-tdd, status: present, owner: yulianPerelshtein, summary: "testing/TDD domain"}
+  - {id: domains/devops, status: present, owner: yulianPerelshtein, summary: "devops domain"}
+  - {id: domains/ai-assisted-coding, status: present, owner: yulianPerelshtein, summary: "AI-assisted-coding domain"}
+  - {id: domains/software-design, status: present, owner: yulianPerelshtein, summary: "clean-code/software-design domain"}
+  - {id: domains/typescript-node, status: planned, owner: yulianPerelshtein, summary: "TypeScript/Node domain (planned)"}
+  - {id: playbooks/debugging, status: present, owner: yulianPerelshtein, summary: "debugging playbooks"}
+  - {id: playbooks/wsl, status: present, owner: yulianPerelshtein, summary: "WSL playbooks"}
+  - {id: playbooks/code-review, status: present, owner: yulianPerelshtein, summary: "code-review playbooks"}
+  - {id: playbooks/ai-assisted-coding, status: present, owner: yulianPerelshtein, summary: "AI-assisted-coding playbooks"}
+  - {id: shareable/dashboard, status: planned, owner: yulianPerelshtein, summary: "statusline dashboard"}
+  - {id: core-budget, status: present, owner: yulianPerelshtein, summary: "budget config + cost tracker only"}
+  - {id: cc-extensions/all, status: external, owner: third-party, summary: "5 git-cloned skill packages"}
+  - {id: cc-extensions/superpowers, status: external, owner: obra, summary: "superpowers skills"}
+  - {id: cc-extensions/wshobson-agents, status: external, owner: wshobson, summary: "wshobson agents"}
+  - {id: marketplace-plugins/all, status: external, owner: anthropics, summary: "typescript-lsp, frontend-design, playwright, skill-creator"}
+  - {id: gsd-ports, status: planned, owner: yulianPerelshtein, summary: "GSD ports"}

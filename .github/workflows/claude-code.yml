@@ -1,0 +1,78 @@
+# Claude in CI — OPT-IN (Tier 2). See domains/observability/claude-code-action.md
+# and playbooks/ci/claude-in-ci.md.
+#
+# SAFETY: this workflow BILLS the Anthropic API account per token. It is gated so
+# it cannot run or bill accidentally:
+#   - never triggers on push or on PR open — only manual dispatch or an explicit
+#     @claude mention in an issue / PR comment;
+#   - no-ops (succeeds, bills nothing) when the ANTHROPIC_API_KEY secret is absent,
+#     so the file can live in the repo without affecting the standard CI checks.
+# To enable: add the ANTHROPIC_API_KEY repo secret, then invoke via @claude or the
+# Actions tab. Bound cost with claude_args (turn cap / allowed-tools).
+
+name: claude-code
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: Task for Claude to run
+        required: false
+        type: string
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: claude-code-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  claude:
+    name: claude
+    runs-on: ubuntu-latest
+    timeout-minutes: 15   # wall-clock cap; --max-turns bounds iterations, not time
+    # Only on manual dispatch or an explicit @claude mention from a trusted actor
+    # (OWNER/MEMBER/COLLABORATOR) — never on push/PR-open, never from an external
+    # commenter. The repo is private today; the author_association gate keeps this
+    # safe even if it is ever made public. claude-code-action also enforces a
+    # write-access check independently.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+        contains(github.event.comment.body, '@claude') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+          github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' &&
+        contains(github.event.comment.body, '@claude') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+          github.event.comment.author_association))
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Report when no API key is configured (no-op, bills nothing)
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "ANTHROPIC_API_KEY is not set — skipping Claude run."
+          echo "This is expected until you opt in. See playbooks/ci/claude-in-ci.md."
+
+      - name: Checkout
+        if: env.HAS_KEY == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        if: env.HAS_KEY == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: ${{ github.event.inputs.prompt }}
+          # Bound per-run cost; widen only as needed.
+          claude_args: "--max-turns 15"

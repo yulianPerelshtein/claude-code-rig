@@ -1,0 +1,6 @@
+# CODEOWNERS for claude-code-rig.
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Solo repo: every path requires @yulianPerelshtein review.
+
+* @yulianPerelshtein

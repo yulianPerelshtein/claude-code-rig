@@ -1,0 +1,41 @@
+# Daily dry-run of the bespoke installer's `personal-full` profile resolution
+# on a fresh runner. Verifies the manifest + profiles resolve and that a dry-run
+# apply writes nothing. The normal install path is the marketplace plugin
+# (install/bootstrap-wsl.sh); this gate exercises the reserved fallback.
+
+name: installer-dryrun
+
+on:
+  schedule:
+    - cron: '0 7 * * *'   # daily at 07:00 UTC, after secret-scan
+  push:
+    branches: [main]
+    paths:
+      - 'install/**'
+      - 'manifests/**'
+      - 'profiles/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installer-dryrun-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installer-dryrun:
+    name: installer-dryrun (personal-full)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Resolve + dry-run personal-full (must write nothing)
+        run: |
+          set -euo pipefail
+          bash install/dry-run.sh personal-full
+          bash install/dry-run.sh minimal-core
+          test ! -d "${HOME}/.claude" \
+            || test -z "$(find "${HOME}/.claude" -type f 2>/dev/null)" \
+            || { echo 'dry-run wrote files to ~/.claude'; exit 1; }
+          echo "dry-run wrote nothing."

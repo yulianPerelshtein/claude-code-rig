@@ -1,0 +1,25 @@
+{
+  "_comment": "Patterns for read_injection_scanner.py (Python re, IGNORECASE). Adapted from the GSD read-injection-scanner hook (MIT). Advisory-only detection of prompt-injection / summarisation-survival strings in content returned by Read/WebFetch.",
+  "injection": [
+    "ignore\\s+(all\\s+)?previous\\s+instructions",
+    "ignore\\s+(all\\s+)?above\\s+instructions",
+    "disregard\\s+(all\\s+)?previous",
+    "forget\\s+(all\\s+)?(your\\s+)?instructions",
+    "override\\s+(system|previous)\\s+(prompt|instructions)",
+    "you\\s+are\\s+now\\s+(?:a|an|the)\\s+",
+    "act\\s+as\\s+(?:a|an|the)\\s+(?!plan|phase|wave)",
+    "pretend\\s+(?:you(?:'re| are)\\s+|to\\s+be\\s+)",
+    "from\\s+now\\s+on,?\\s+you\\s+(?:are|will|should|must)",
+    "(?:print|output|reveal|show|display|repeat)\\s+(?:your\\s+)?(?:system\\s+)?(?:prompt|instructions)",
+    "</?(?:system|assistant|human)>",
+    "\\[SYSTEM\\]",
+    "\\[INST\\]",
+    "<<\\s*SYS\\s*>>"
+  ],
+  "summarisation": [
+    "when\\s+(?:summari[sz]ing|compressing|compacting),?\\s+(?:retain|preserve|keep)\\s+(?:this|these)",
+    "this\\s+(?:instruction|directive|rule)\\s+is\\s+(?:permanent|persistent|immutable)",
+    "preserve\\s+(?:these|this)\\s+(?:rules?|instructions?|directives?)\\s+(?:in|through|after|during)",
+    "(?:retain|keep)\\s+(?:this|these)\\s+(?:in|through|after)\\s+(?:summar|compress|compact)"
+  ]
+}

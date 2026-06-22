@@ -1,0 +1,70 @@
+# OPT-IN CI substrate for a routine (Tier-2). Mirrors the safety posture of
+# .github/workflows/claude-code.yml — see domains/observability/claude-code-action.md
+# and playbooks/ci/claude-in-ci.md.
+#
+# SAFETY: this workflow BILLS the Anthropic API account per token (it is NOT
+# subscription-free in CI). It is rendered + committed into a target repo only
+# when you explicitly opt a routine into CI. It is gated so it cannot bill
+# accidentally:
+#   - no-ops (succeeds, bills nothing) when ANTHROPIC_API_KEY is absent;
+#   - timeout-minutes bounds wall-clock; claude_args bounds turns + tools.
+#
+# ENFORCEMENT CAVEAT: in CI the runner (run-routine.sh / runner/policy.py /
+# gitops.py) does NOT execute — claude-code-action runs the body directly. So
+# the runner's outcome-policy invariants are NOT enforced here; only the skill
+# prose + the permissions/allowed-tools below constrain the run. Prefer the
+# local systemd substrate for mutating (draft-pr) routines. Defaults below are
+# READ-ONLY + minimal tools (suitable for report-only routines like begin-work /
+# monthly-drift). For a draft-pr routine, opt in explicitly by setting
+# `permissions: pull-requests: write` (+ contents: write) and widening
+# __TOOLS__ — and accept that the model, not the runner, is then trusted.
+#
+# RENDER before committing into a target repo's .github/workflows/:
+#   __NAME__     routine name (a registry.yaml key)
+#   __CRON__     POSIX cron expression (e.g. "0 18 * * 0" for Sun 18:00 UTC)
+#   __TARGET__   repo path the routine operates on (usually ".")
+#   __OUTCOME__  the routine's outcome policy (report-only | draft-pr | ...)
+#   __TOOLS__    allowed-tools (e.g. "Read,Grep" report-only; "Bash,Read,Edit,Grep" draft-pr)
+name: routine-__NAME__
+
+on:
+  schedule:
+    - cron: "__CRON__"
+  workflow_dispatch:
+
+# Read-only by default (report-only routines). Escalate per the caveat above.
+permissions:
+  contents: read
+
+concurrency:
+  group: routine-__NAME__-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  routine:
+    name: routine-__NAME__
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Report when no API key is configured (no-op, bills nothing)
+        if: env.HAS_KEY != 'true'
+        run: |
+          echo "ANTHROPIC_API_KEY is not set — skipping routine-__NAME__."
+          echo "This is expected until you opt in. See playbooks/ci/claude-in-ci.md."
+
+      - name: Checkout
+        if: env.HAS_KEY == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run routine via Claude Code
+        if: env.HAS_KEY == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "/__NAME__ --target __TARGET__ --routine-mode --outcome __OUTCOME__"
+          # Bound per-run cost; widen __TOOLS__ only as the outcome requires.
+          claude_args: "--max-turns 15 --allowed-tools __TOOLS__"

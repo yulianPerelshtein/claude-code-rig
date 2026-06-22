@@ -1,0 +1,82 @@
+# ── Personal / private subtree (NEVER commit) ──────────────────────
+private/
+private/**
+
+# Real redaction marker list (codenames) — never tracked in this public repo;
+# supplied locally / via the REDACTION_PATTERNS CI secret.
+tools/scripts/redaction-patterns.local.txt
+
+# ── State / runtime / caches ────────────────────────────────────────
+.cache/
+.claude/
+.claude-worktrees/
+.config/
+.local/share/kilo/
+.aws/
+.azure/
+.bun/
+.docker/
+.gemini/
+.gnupg/
+.copilot/
+.npm/
+.npm-global/
+.nvm/
+.ruff_cache/
+.snap/
+.ssh/
+.dotnet/
+.vscode-server/
+.vscode-remote-containers/
+
+# ── Conventional secret patterns ───────────────────────────────────
+**/.env
+**/.env.*
+!**/.env.example
+**/.credentials.json
+**/credentials
+**/credentials.json
+**/auth.json
+**/oauth_creds.json
+**/.netrc
+**/.git-credentials
+**/.npmrc
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/id_rsa*
+**/id_ed25519*
+**/*.crt
+**/*.cer
+
+# ── Editor / OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+
+# ── Tool caches ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# ── Generated bundles (never in repo; produced by tools/) ───────────
+exports/
+*.tar.gz
+*.tgz
+*.zip
+
+# Specialized KB lives in the private ccrig-private overlay, never in this public repo.
+domains/bim-ifc-usd-geometry/
+learnings/private-*.md

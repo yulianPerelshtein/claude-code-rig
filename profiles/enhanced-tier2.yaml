@@ -1,0 +1,20 @@
+profile: enhanced-tier2
+description: |
+  Strictly opt-in extras (SOTA_REFRESH §7): headroom (token compression —
+  pre-1.0, data-loss caveats, ~47% on codebase work), AI-Engineering-Coach
+  (VSIX from source — no prebuilt release), Scrapling (anti-bot escalation),
+  claude-code-action (Claude-in-CI — BILLS THE API ACCOUNT), claude-context
+  (scale-gated vector search — local Ollama + Milvus = zero egress; off unless
+  the repo is million-LOC / fuzzy-recall). Additive on top of personal-full.
+  gbrain is DROPPED; obscura is watch-list only (default browser = Playwright
+  MCP). Each enhancement's INSTALL is a deferred user action: the installer
+  validates + reports it (and refuses conflicting pairs) but never runs the
+  install command. The Tier-2 docs/playbooks themselves arrive via the extended
+  personal-full (all-domains / all-playbooks).
+extends: personal-full
+modules:
+  - enhancement: headroom              # pipx; marketplace.yaml#enhancements
+  - enhancement: ai-engineering-coach  # VSIX-from-source (no prebuilt)
+  - enhancement: scrapling             # anti-bot escalation; conflicts_with obscura
+  - enhancement: claude-code-action    # .github/workflows/claude-code.yml (bills API)
+  - enhancement: claude-context        # scale-gated vector search (local = zero egress)

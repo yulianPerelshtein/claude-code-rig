@@ -1,0 +1,23 @@
+# AGENTS.md — <project-name>
+
+Working agreement for any AI agent operating in this repo. Keep it short; it
+supplements the global rules, it doesn't repeat them.
+
+## Workflow
+
+- Surface decision-affecting questions **early**, before implementing — not
+  after a wrong path is built.
+- Insert a **review checkpoint before committing**: summarize the diff and the
+  intent; let the human confirm before the commit lands.
+- Verify with this repo's own commands (build/test/lint) before claiming done.
+
+## Output / communication
+
+- No LLM-flavored prose in code, comments, commit messages, or PR bodies
+  (no "As an AI…", no filler, no marketing tone).
+- Match existing conventions in the file you're editing.
+
+## Do Not
+
+- [project-specific prohibitions — e.g. don't touch generated dirs, don't edit
+  vendored code]

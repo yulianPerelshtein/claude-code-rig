@@ -1,0 +1,14 @@
+{
+  "context_window": {
+    "used_percentage": 71,
+    "current_usage": {
+      "input_tokens": 52000,
+      "output_tokens": 4300,
+      "cache_read_input_tokens": 210000
+    }
+  },
+  "cost": { "total_cost_usd": 2.41 },
+  "model": { "display_name": "Opus" },
+  "agent": { "name": "refactor" },
+  "worktree": { "branch": "feature/x" }
+}

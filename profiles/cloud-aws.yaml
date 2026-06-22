@@ -1,0 +1,10 @@
+profile: cloud-aws
+description: |
+  AWS / SSO / CloudFormation / EventBridge focus.
+modules:
+  - core
+  - domains/cloud-aws
+  - domains/devops
+  - playbooks/debugging
+  - shareable/dashboard
+  - cc-extensions/superpowers

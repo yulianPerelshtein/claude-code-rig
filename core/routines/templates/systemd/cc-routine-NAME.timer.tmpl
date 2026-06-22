@@ -1,0 +1,23 @@
+# Per-routine systemd user timer for routines.
+#
+# One concrete timer per scheduled routine (OnCalendar cannot vary across
+# instances of a single templated timer). Each timer triggers the shared
+# templated service cc-routine@<name>.service. Persistent=true catches up runs
+# missed while the machine was off (chosen over cron/atd: F.5 showed WSLg timers
+# are unreliable).
+#
+# RENDER before install:
+#   __NAME__         routine name (must match a registry.yaml key + the .service instance)
+#   __ON_CALENDAR__  systemd OnCalendar expression (e.g. "Sun 18:00", "*-*-01 09:00")
+# Install rendered units under ~/.config/systemd/user/ then
+# `systemctl --user enable --now cc-routine-__NAME__.timer`. Never installed by tests.
+[Unit]
+Description=cc-rig routine __NAME__ schedule
+
+[Timer]
+OnCalendar=__ON_CALENDAR__
+Persistent=true
+Unit=cc-routine@__NAME__.service
+
+[Install]
+WantedBy=timers.target

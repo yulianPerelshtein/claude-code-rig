@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-rig",
+  "description": "Single-plugin marketplace for the personal claude-code-rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles.",
+  "owner": {
+    "name": "yulianPerelshtein"
+  },
+  "plugins": [
+    {
+      "name": "claude-code-rig",
+      "source": "./",
+      "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles."
+    }
+  ]
+}

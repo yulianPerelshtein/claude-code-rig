@@ -1,0 +1,6 @@
+profile: claude-dashboard
+description: |
+  Just the dashboard. Lighter than minimal-core.
+modules:
+  - shareable/dashboard
+  - core-budget

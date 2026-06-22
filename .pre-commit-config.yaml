@@ -1,0 +1,56 @@
+# Pre-commit hooks for claude-code-rig.
+# Mirrors the GitHub Actions secret-scan + lint workflows so violations
+# are caught before push.
+#
+# Install once per clone:
+#     pip install pre-commit
+#     pre-commit install
+#
+# Run manually on all files:
+#     pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.3
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        args: ['--fix']
+
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.markdownlint.json']
+
+  # Custom redaction-pattern blocklist (delegated to a script so
+  # the pattern definitions don't appear in this YAML).
+  - repo: local
+    hooks:
+      - id: redaction-pattern-blocklist
+        name: Redaction pattern blocklist
+        language: system
+        entry: .github/scripts/check-redactions.sh
+        pass_filenames: true
+        types_or: [python, shell, javascript, json, yaml, markdown, text]

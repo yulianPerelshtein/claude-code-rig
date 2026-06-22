@@ -1,0 +1,18 @@
+{
+  "context_window": {
+    "used_percentage": 42,
+    "current_usage": {
+      "input_tokens": 18234,
+      "output_tokens": 1200,
+      "cache_read_input_tokens": 95000
+    }
+  },
+  "cost": { "total_cost_usd": 0.83 },
+  "model": { "display_name": "Sonnet" },
+  "agent": { "name": "" },
+  "worktree": { "branch": "" },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 36, "resets_at": 1719864000 },
+    "seven_day": { "used_percentage": 15, "resets_at": 1720123200 }
+  }
+}

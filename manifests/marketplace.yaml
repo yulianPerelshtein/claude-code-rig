@@ -1,0 +1,78 @@
+# marketplace.yaml — cc-extensions git pins + Claude Code marketplace plugins.
+# Read by both paths: install/install-extensions.sh (bespoke clones) and as the
+# record of what the marketplace flow installs. Pins are the commits vendored on
+# the source machine; advance with `install-extensions.sh --upgrade`.
+
+extensions:
+  - id: superpowers
+    source: https://github.com/obra/superpowers.git
+    pinned_commit: f2cbfbefebbfef77321e4c9abc9e949826bea9d7
+    install_to: ~/cc-extensions/superpowers
+    skills_path: ~/cc-extensions/superpowers/skills
+  - id: obsidian-skills
+    source: https://github.com/kepano/obsidian-skills.git
+    pinned_commit: ac9398734fe719565809f7a6048b05c36b1ca38f
+    install_to: ~/cc-extensions/obsidian-skills
+    skills_path: ~/cc-extensions/obsidian-skills/skills
+  - id: tutor-skills
+    source: https://github.com/bevibing/tutor-skills.git
+    pinned_commit: 397110c9fefbc6bd5444277686600aec28063c05
+    install_to: ~/cc-extensions/tutor-skills
+    skills_path: ~/cc-extensions/tutor-skills/skills
+  - id: wshobson-agents
+    source: https://github.com/wshobson/agents.git
+    pinned_commit: 34632bcbea28176ba25bbbc43cd4017d88b1cac6
+    install_to: ~/cc-extensions/wshobson-agents
+  - id: claude-plugins-official
+    source: https://github.com/anthropics/claude-plugins-official.git
+    pinned_commit: 1a2f18b05cf5652fd25403e8d229fc884fb84103
+    install_to: ~/.claude/plugins/marketplaces/claude-plugins-official
+    install_method: claude_marketplace
+
+plugins:
+  - id: typescript-lsp@claude-plugins-official
+    install_method: "claude plugin install typescript-lsp@claude-plugins-official"
+  - id: frontend-design@claude-plugins-official
+    install_method: "claude plugin install frontend-design@claude-plugins-official"
+  - id: playwright@claude-plugins-official
+    install_method: "claude plugin install playwright@claude-plugins-official"
+  - id: skill-creator@claude-plugins-official
+    install_method: "claude plugin install skill-creator@claude-plugins-official"
+
+# Tier-2 opt-in enhancements (profiles/enhanced-tier2.yaml). Installs are
+# DEFERRED user actions: the installer validates + reports these but never runs
+# the command. Pin versions on the laptop after evaluation. Each ships a
+# smoke-test the user runs after a manual install.
+enhancements:
+  - id: headroom
+    install_method: pipx
+    install: 'pipx install "headroom-ai[all]"'
+    version: latest          # pin after the >=1-week evaluation
+    deferred: true
+    doc: domains/context-engineering/headroom.md
+    smoke_test: enhancements/headroom/smoke-test.sh
+  - id: ai-engineering-coach
+    install_method: vsix-from-source
+    install: 'build the VSIX from source (no prebuilt release) — see doc'
+    deferred: true
+    doc: domains/observability/ai-engineering-coach.md
+    smoke_test: enhancements/ai-engineering-coach/smoke-test.sh
+  - id: scrapling
+    install_method: pipx
+    install: 'pipx install "scrapling[ai]" && scrapling install'
+    conflicts_with: obscura   # installer refuses both; obscura is watch-list only
+    deferred: true
+    doc: domains/scraping/scrapling.md
+    smoke_test: enhancements/scrapling/smoke-test.sh
+  - id: claude-code-action
+    install_method: ci-workflow
+    install: 'add ANTHROPIC_API_KEY secret; workflow at .github/workflows/claude-code.yml (BILLS API)'
+    deferred: true
+    doc: domains/observability/claude-code-action.md
+    smoke_test: enhancements/claude-code-action/smoke-test.sh
+  - id: claude-context
+    install_method: mcp
+    install: 'claude mcp add claude-context -e EMBEDDING_PROVIDER=Ollama -e MILVUS_ADDRESS=localhost:19530 -- npx @zilliz/claude-context-mcp@latest (local Ollama + Milvus = zero egress; scale-gated)'
+    deferred: true
+    doc: domains/context-engineering/claude-context.md
+    smoke_test: enhancements/claude-context/smoke-test.sh

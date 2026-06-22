@@ -1,0 +1,17 @@
+# profile.manifest.yaml — index of available profiles (bespoke path).
+#
+# The authoritative module lists live in profiles/<name>.yaml (the installer
+# reads those directly). This index is the registry the installer enumerates to
+# list/validate profile names; it does NOT duplicate the module lists, to avoid
+# drift between the two.
+
+profiles:
+  - {name: minimal-core, file: profiles/minimal-core.yaml}
+  - {name: personal-full, file: profiles/personal-full.yaml}
+  - {name: backend, file: profiles/backend.yaml}
+  - {name: bim-geometry-usd, file: profiles/bim-geometry-usd.yaml}
+  - {name: cloud-aws, file: profiles/cloud-aws.yaml}
+  - {name: ai-assisted-coding, file: profiles/ai-assisted-coding.yaml}
+  - {name: claude-dashboard, file: profiles/claude-dashboard.yaml}
+  - {name: shareable-dashboard, file: profiles/shareable-dashboard.yaml}
+  - {name: future-work-laptop, file: profiles/future-work-laptop.yaml}

@@ -1,0 +1,24 @@
+{
+  "name": "claude-code-rig",
+  "version": "0.0.3",
+  "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles.",
+  "skills": [
+    "./core/skills/",
+    "./skills/custom/",
+    "./domains/"
+  ],
+  "agents": [
+    "./core/agents/code-reviewer.md",
+    "./core/agents/pr-writer.md",
+    "./core/agents/refactor.md",
+    "./core/agents/test-writer.md",
+    "./core/agents/eval-planner.md",
+    "./core/agents/eval-auditor.md"
+  ],
+  "outputStyles": [
+    "./core/styles/"
+  ],
+  "hooks": "./core/hooks/hooks.json",
+  "mcpServers": "./.mcp.json",
+  "lspServers": "./.lsp.json"
+}

@@ -1,0 +1,25 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# Ruff defaults are E4/E7/E9 + F. Add line-length + complexity limits:
+extend-select = ["E501", "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 6
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+# Routines added pytest config. We deliberately do NOT add a
+# [project] table / requires-python pin: every `uv run` (hooks, repo-map,
+# installer, runner) keeps resolving to the uv default (>=3.10) so the routine
+# runner imposes no new floor on the rest of the rig.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Make the routines runner package importable as `runner.*` in tests without an
+# installed distribution.
+pythonpath = ["core/routines"]

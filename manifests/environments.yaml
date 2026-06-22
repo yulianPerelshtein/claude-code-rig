@@ -1,0 +1,27 @@
+# environments.yaml — per-environment path + shell overrides.
+#
+# The rig is WSL-first; macOS/Linux entries exist so the bespoke installer can
+# resolve target roots correctly off-WSL. `claude_dir` is the install root the
+# install.manifest.yaml dest paths are relative to (always ${HOME}/.claude here).
+
+default: wsl
+
+environments:
+  wsl:
+    description: WSL2 Ubuntu (primary).
+    home: "${HOME}"
+    claude_dir: "${HOME}/.claude"
+    shell: bash
+    windows_mount_forbidden: true   # /mnt/c is off-limits (guardrail enforced)
+  linux:
+    description: Native Linux.
+    home: "${HOME}"
+    claude_dir: "${HOME}/.claude"
+    shell: bash
+    windows_mount_forbidden: false
+  macos:
+    description: macOS (untested; provided for completeness).
+    home: "${HOME}"
+    claude_dir: "${HOME}/.claude"
+    shell: zsh
+    windows_mount_forbidden: false

@@ -1,0 +1,13 @@
+profile: ai-assisted-coding
+description: |
+  Heavy AI/agent work, plus the GSD-port hooks.
+modules:
+  - core
+  - domains/ai-assisted-coding
+  - domains/testing-tdd
+  - playbooks/ai-assisted-coding
+  - playbooks/code-review
+  - shareable/dashboard
+  - cc-extensions/superpowers
+  - cc-extensions/wshobson-agents
+  - gsd-ports

@@ -1,0 +1,17 @@
+# redaction-patterns.txt — TEMPLATE (public repo: no real identifiers here).
+#
+# The real company / vendor / project marker regexes are intentionally NOT
+# tracked in this repo. Supply them privately via either:
+#   - the gitignored file  tools/scripts/redaction-patterns.local.txt  (local), or
+#   - the CI secret  REDACTION_PATTERNS  (the secret-scan workflow writes it to
+#     that path before running the blocklist).
+#
+# Both check-redactions.sh and sanitize.py prefer the private source above and
+# fall back to this template. The placeholders below are illustrative only —
+# replace them in your local/secret copy with the identifiers you must redact.
+# One Python-regex per non-comment, non-blank line.
+AcmeCorp
+ExampleVendor
+project-codename-(alpha|beta)
+internal_service_name
+/mnt/c/

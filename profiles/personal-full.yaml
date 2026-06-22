@@ -1,0 +1,30 @@
+profile: personal-full
+description: |
+  Everything except Kilo. The user's daily driver. The Tier-1 adopted
+  enhancements (serena, OTel, skill-techniques, etc.) are appended here;
+  sources that do not exist yet are skipped by the resolver.
+modules:
+  - core
+  - skills/custom
+  - learnings/distilled
+  - all-domains
+  - all-playbooks
+  - all-templates
+  - shareable/dashboard
+  - cc-extensions/all
+  - marketplace-plugins/all
+
+# Routines. The routine BODY skills already ship via the `core` module
+# (core/skills/ -> .claude/skills/) and auto-register through the plugin glob;
+# the safety-critical runner (core/routines/) is invoked from the rig checkout
+# via the systemd unit's __RIG_ROOT__, so it is intentionally not file-copied
+# into ~/.claude. This block is declarative metadata the thin bootstrap reads to
+# render + `systemctl --user enable --now` the scheduled timers — the installer's
+# file resolver only consumes `modules`/`extends`, so it ignores this key.
+routines:
+  enabled: [begin-work, wrap-up, weekly-retro, monthly-drift, dream-loop]
+  timers:                # rendered from core/routines/templates/systemd/ + enabled by bootstrap
+    - cc-routine-weekly-retro.timer
+    - cc-routine-monthly-drift.timer
+    - cc-routine-dream-loop.timer
+  ci_template: false     # opt-in only (Tier-2; API-billed)

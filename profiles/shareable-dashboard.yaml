@@ -1,0 +1,6 @@
+profile: shareable-dashboard
+description: |
+  Same as claude-dashboard but applied by the recipient of a sanitized tarball
+  produced by tools/export-shareable.sh. Install context is the bundle itself.
+modules:
+  - shareable/dashboard

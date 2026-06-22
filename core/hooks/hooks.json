@@ -1,0 +1,128 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/session_start.sh" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/pre-tool/guardrail.py" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/pre-tool/tdd_commit_gate.py" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/post-tool/typecheck.py" }
+        ]
+      },
+      {
+        "matcher": "mcp__",
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/post-tool/mcp_trimmer.py" }
+        ]
+      },
+      {
+        "matcher": "Read|WebFetch",
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/post-tool/read_injection_scanner.py" }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/post-tool-failure/post_tool_use_failure.py" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/user-prompt-submit/user_prompt_submit.py" }
+        ]
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/instructions-loaded/instructions_loaded.py" }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/session_end.py" },
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/dream_loop.py" },
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/session_perf.py" }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/teammate-idle/teammate_idle.py" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/stop/ruff_fix_changed.sh" },
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/stop/cost_tracker.py" }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/task-completed/task_completed.sh" }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto|manual",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/pre_compact.sh" }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "idle_prompt|permission_prompt",
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/notification/notify.sh" }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_start.sh" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_stop.sh" }
+        ]
+      }
+    ]
+  }
+}

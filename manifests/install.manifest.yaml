@@ -1,0 +1,120 @@
+# install.manifest.yaml — bespoke-path module -> file map (reserved DLP fallback).
+#
+# The marketplace plugin path (.claude-plugin/, .mcp.json) is the normal install;
+# these entries only drive install/install-profile.sh on a DLP-locked machine.
+#
+# Each module has a kind:
+#   copy        -> `copies:` list of {src, dest}; dest is relative to ${HOME}.
+#                  A trailing-slash src copies the tree (files map by relative path).
+#   extensions  -> installed by install/install-extensions.sh (git clones), not copied.
+#   marketplace -> installed via `claude plugin install ...`, not copied.
+#   future      -> placeholder for not-yet-authored content; resolver skips with a note.
+#
+# Sources that do not exist on disk are skipped
+# with a note, so a profile that lists them still dry-runs cleanly. The settings
+# template installs as .claude/settings.template.json (a starting point to MERGE
+# into your settings.json) — never overwriting a customised settings.json.
+
+modules:
+  core:
+    kind: copy
+    copies:
+      - {src: "core/CLAUDE.base.md", dest: ".claude/CLAUDE.md"}
+      - {src: "core/coding-style.md", dest: ".claude/coding-style.md"}
+      - {src: "core/reasoning-preferences.md", dest: ".claude/reasoning-preferences.md"}
+      - {src: "core/safety-rules.md", dest: ".claude/safety-rules.md"}
+      - {src: "core/default-workflows.md", dest: ".claude/default-workflows.md"}
+      - {src: "core/github-content-rules.md", dest: ".claude/github-content-rules.md"}
+      - {src: "core/context-budget-policy.md", dest: ".claude/context-budget-policy.md"}
+      - {src: "core/context-architecture.md", dest: ".claude/context-architecture.md"}
+      - {src: "core/settings.template.json", dest: ".claude/settings.template.json"}
+      - {src: "core/skills/", dest: ".claude/skills/"}
+      - {src: "core/agents/", dest: ".claude/agents/"}
+      - {src: "core/styles/", dest: ".claude/output-styles/"}
+      - {src: "core/hooks/", dest: ".claude/hooks/"}
+
+  skills/custom:
+    kind: copy
+    copies:
+      - {src: "skills/custom/", dest: ".claude/skills/"}
+
+  learnings/distilled:
+    kind: copy
+    copies:
+      - {src: "learnings/distilled.md", dest: ".claude/learnings/distilled.md"}
+
+  all-domains:
+    kind: copy
+    copies:
+      - {src: "domains/", dest: ".claude/skills/"}
+
+  all-playbooks:
+    kind: copy
+    copies:
+      - {src: "playbooks/", dest: ".claude/playbooks/"}
+
+  all-templates:
+    kind: copy
+    copies:
+      - {src: "templates/", dest: ".claude/templates/"}
+
+  # Per-domain modules (subset profiles).
+  domains/python:
+    kind: copy
+    copies: [{src: "domains/python/", dest: ".claude/skills/python/"}]
+  domains/typescript-node:
+    kind: copy
+    copies: [{src: "domains/typescript-node/", dest: ".claude/skills/typescript-node/"}]
+  domains/cloud-aws:
+    kind: copy
+    copies: [{src: "domains/cloud-aws/", dest: ".claude/skills/cloud-aws/"}]
+  domains/testing-tdd:
+    kind: copy
+    copies: [{src: "domains/testing-tdd/", dest: ".claude/skills/testing-tdd/"}]
+  domains/devops:
+    kind: copy
+    copies: [{src: "domains/devops/", dest: ".claude/skills/devops/"}]
+  domains/ai-assisted-coding:
+    kind: copy
+    copies: [{src: "domains/ai-assisted-coding/", dest: ".claude/skills/ai-assisted-coding/"}]
+  domains/software-design:
+    kind: copy
+    copies: [{src: "domains/software-design/", dest: ".claude/skills/software-design/"}]
+
+  # Per-playbook modules (subset profiles).
+  playbooks/debugging:
+    kind: copy
+    copies: [{src: "playbooks/debugging/", dest: ".claude/playbooks/debugging/"}]
+  playbooks/wsl:
+    kind: copy
+    copies: [{src: "playbooks/wsl/", dest: ".claude/playbooks/wsl/"}]
+  playbooks/code-review:
+    kind: copy
+    copies: [{src: "playbooks/code-review/", dest: ".claude/playbooks/code-review/"}]
+  playbooks/ai-assisted-coding:
+    kind: copy
+    copies: [{src: "playbooks/ai-assisted-coding/", dest: ".claude/playbooks/ai-assisted-coding/"}]
+
+  # Flagship dashboard.
+  shareable/dashboard:
+    kind: copy
+    copies:
+      - {src: "shareable/dashboard/", dest: ".claude/utils/"}
+
+  # Virtual composite: just the budget config + cost tracker.
+  core-budget:
+    kind: copy
+    copies:
+      - {src: "core/budget.template.json", dest: ".claude/budget.json"}
+      - {src: "core/hooks/stop/cost_tracker.py", dest: ".claude/hooks/stop/cost_tracker.py"}
+
+  # Installed by install/install-extensions.sh (git clones), not file-copied.
+  cc-extensions/all: {kind: extensions}
+  cc-extensions/superpowers: {kind: extensions}
+  cc-extensions/wshobson-agents: {kind: extensions}
+
+  # Installed via the Claude Code marketplace, not file-copied.
+  marketplace-plugins/all: {kind: marketplace}
+
+  # GSD ports.
+  gsd-ports: {kind: future}

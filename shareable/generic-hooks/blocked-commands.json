@@ -1,0 +1,25 @@
+{
+  "patterns": [
+    {"regex": "\\brm\\s+-[a-z]*r[a-z]*f",      "reason": "recursive force delete (rm -rf) is prohibited"},
+    {"regex": "\\brm\\s+-[a-z]*f[a-z]*r",      "reason": "recursive force delete (rm -fr) is prohibited"},
+    {"regex": "\\brm\\s+[^;&|]*(-[a-z]*r\\b|--recursive)[^;&|]*(-[a-z]*f\\b|--force)", "reason": "recursive force delete (split/long-flag rm) is prohibited"},
+    {"regex": "\\brm\\s+[^;&|]*(-[a-z]*f\\b|--force)[^;&|]*(-[a-z]*r\\b|--recursive)", "reason": "recursive force delete (split/long-flag rm) is prohibited"},
+    {"regex": "git\\s+push\\s+.*--force",       "reason": "force push corrupts remote history"},
+    {"regex": "git\\s+push\\s+.*-f\\b",         "reason": "force push corrupts remote history"},
+    {"regex": "git\\s+reset\\s+--hard",         "reason": "hard reset destroys uncommitted work"},
+    {"regex": "git\\s+clean\\s+-[a-z]*f",       "reason": "git clean -f destroys untracked files"},
+    {"regex": "curl\\s+.*\\|\\s*(ba)?sh",       "reason": "piping curl to shell is a supply chain risk"},
+    {"regex": "wget\\s+.*\\|\\s*(ba)?sh",       "reason": "piping wget to shell is a supply chain risk"},
+    {"regex": "docker\\s+system\\s+prune",      "reason": "destroys all local images/volumes"},
+    {"regex": "chmod\\s+-?R?\\s*777",           "reason": "chmod 777 creates security vulnerabilities"},
+    {"regex": "DROP\\s+(TABLE|DATABASE|SCHEMA)","reason": "destructive SQL operation"},
+    {"regex": "TRUNCATE\\s+TABLE",              "reason": "destructive SQL operation"},
+    {"regex": "cat\\s+.*\\.(env|secret|secrets|pem|key|p12|pfx)", "reason": "reading credential files is prohibited"},
+    {"regex": "cat\\s+.*credentials",           "reason": "reading credential files is prohibited"},
+    {"regex": "cat\\s+.*id_rsa",               "reason": "reading SSH private keys is prohibited"},
+    {"regex": "aws\\s+configure\\s+set",        "reason": "do not modify AWS credentials via CLI"},
+    {"regex": "mkfs\\.",                        "reason": "formatting a filesystem is prohibited"},
+    {"regex": "> /dev/sd",                      "reason": "writing to block devices is prohibited"},
+    {"regex": "ruff\\s+format\\b",              "reason": "ruff format rewrites whitespace and creates PR noise; use ruff check --fix instead"}
+  ]
+}

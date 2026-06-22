@@ -1,0 +1,20 @@
+# Templated systemd user service for routines.
+#
+# One templated service backs every routine; the instance name (%i) is the
+# routine name. Pair it with one concrete timer per scheduled routine
+# (cc-routine-<name>.timer) — OnCalendar cannot vary across instances of a
+# single templated timer, so timers are per-routine while the service is shared.
+#
+# RENDER before install (the installer / bootstrap does this; see
+# core/routines/README.md):
+#   __RIG_ROOT__  absolute path to the rig checkout (e.g. /home/<user>/claude-code-rig)
+#   __TARGET__    repo the routine operates on (default: the rig root)
+# Install rendered units under ~/.config/systemd/user/ then
+# `systemctl --user enable --now cc-routine-<name>.timer`. Never installed by tests.
+[Unit]
+Description=cc-rig routine %i
+
+[Service]
+Type=oneshot
+Environment=CC_ROUTINE_MODE=1
+ExecStart=__RIG_ROOT__/core/routines/run-routine.sh %i --target __TARGET__

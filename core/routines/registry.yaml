@@ -1,0 +1,52 @@
+# core/routines/registry.yaml — the single source of truth for routine bindings.
+#
+# Each entry binds a routine name to its body, triggers, default target, and the
+# outcome policy the runner ENFORCES (the model is never trusted to obey it).
+# See core/routines/README.md and ROUTINES_DESIGN.md for the vocabulary.
+#
+# body_type:
+#   skill  (default) -> the runner invokes `/<body>` headlessly via `claude -p`.
+#   script           -> the runner executes `script` directly (deterministic, no
+#                       LLM). dream-loop reuses the shipped
+#                       core/hooks/session/dream_loop.py instead of a near-
+#                       duplicate of the existing /dream-report skill.
+version: 1
+routines:
+  begin-work:
+    body: begin-work
+    description: "Daily startup: fetch, branch status, today's plan, light drift, loose ends."
+    triggers: [{type: manual}, {type: event, hook: SessionStart, mode: nudge}]
+    target_default: cwd
+    outcome: report-only
+    enabled: true
+  wrap-up:
+    body: wrap-up                  # binds to the EXISTING /wrap-up skill
+    description: "Daily shutdown: commit hygiene + session summary to learnings/MEMORY."
+    triggers: [{type: manual}, {type: event, hook: SessionEnd}]
+    target_default: cwd
+    outcome: local-write-allowlist
+    enabled: true
+  weekly-retro:
+    body: weekly-retro
+    description: "Cluster the week's summaries + candidate learnings; propose distilled.md additions."
+    triggers: [{type: manual}, {type: scheduled, on_calendar: "Sun 18:00"}]
+    target_default: rig
+    outcome: draft-pr
+    enabled: true
+  monthly-drift:
+    body: monthly-drift
+    description: "Diff deployed ~/.claude vs rig; flag config/hook drift + stale pins."
+    triggers: [{type: manual}, {type: scheduled, on_calendar: "*-*-01 09:00"}]
+    target_default: rig
+    outcome: report-only
+    enabled: true
+  dream-loop:
+    body: dream-loop
+    body_type: script              # reuse the shipped deterministic hook (no /dream-loop skill)
+    script: core/hooks/session/dream_loop.py
+    artifact_hint: "~/.claude/data/dream-reports/*.md"   # runner records the report it writes
+    description: "Consolidate session summaries into pattern candidates (report-only)."
+    triggers: [{type: manual}, {type: scheduled, on_calendar: "*-*-* 03:00"}]
+    target_default: cwd
+    outcome: report-only
+    enabled: true

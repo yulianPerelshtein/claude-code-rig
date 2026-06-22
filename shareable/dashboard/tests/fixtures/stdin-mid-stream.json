@@ -1,0 +1,15 @@
+{
+  "context_window": {
+    "used_percentage": 12,
+    "current_usage": {
+      "input_tokens": 3000,
+      "output_tokens": 880,
+      "cache_read_input_tokens": 0
+    }
+  },
+  "cost": { "total_cost_usd": 0.07 },
+  "model": { "display_name": "Sonnet" },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 4, "resets_at": 1719864000 }
+  }
+}

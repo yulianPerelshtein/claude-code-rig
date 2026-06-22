@@ -1,0 +1,16 @@
+profile: backend
+description: |
+  Backend-developer subset: Python, TypeScript/Node, AWS, testing, devops,
+  and the AI-assisted-coding playbooks.
+modules:
+  - core
+  - domains/python
+  - domains/typescript-node
+  - domains/cloud-aws
+  - domains/testing-tdd
+  - domains/devops
+  - domains/ai-assisted-coding
+  - all-playbooks
+  - shareable/dashboard
+  - cc-extensions/superpowers
+  - cc-extensions/wshobson-agents

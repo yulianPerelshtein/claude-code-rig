@@ -1,0 +1,6 @@
+profile: minimal-core
+description: |
+  Just core/. No domains, no playbooks, no marketplace. The smallest install
+  that gives a working hooks + agents + skills setup.
+modules:
+  - core

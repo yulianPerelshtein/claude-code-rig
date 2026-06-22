@@ -1,0 +1,15 @@
+profile: future-work-laptop
+description: |
+  Generic core only — zero references to any prior employer. Employer-specific
+  overrides are added per-employer in a fresh layer outside this rig.
+modules:
+  - core
+  - domains/python
+  - domains/devops
+  - domains/testing-tdd
+  - domains/ai-assisted-coding
+  - all-playbooks
+  - shareable/dashboard
+  - cc-extensions/superpowers
+  - cc-extensions/wshobson-agents
+  - marketplace-plugins/all

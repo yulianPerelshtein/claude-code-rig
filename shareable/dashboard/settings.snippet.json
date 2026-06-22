@@ -1,0 +1,23 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/utils/statusline.sh"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 ~/.claude/hooks/cost_tracker.py" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          { "type": "command", "command": "python3 ~/.claude/hooks/mcp_trimmer.py" }
+        ]
+      }
+    ]
+  }
+}
