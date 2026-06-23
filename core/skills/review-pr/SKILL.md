@@ -82,27 +82,27 @@ files. If it is empty, the branch has no associated PR; rely on step 3's
 
 9. Render the review to the USER as text (do NOT post). Use this format exactly:
 
-```text
-### Code review
+   ```text
+   ### Code review
 
-Found N issues:
+   Found N issues:
 
-1. <brief description> (<reason: CLAUDE.md rule / security / bug / historical context>)
+   1. <brief description> (<reason: CLAUDE.md rule / security / bug / historical context>)
 
-<https://github.com/owner/repo/blob/FULL_SHA/path/to/file#L10-L14>
+   <https://github.com/owner/repo/blob/FULL_SHA/path/to/file#L10-L14>
 
-2. ...
+   2. ...
 
-<sub>If this review was useful, react 👍. Otherwise react 👎.</sub>
-```
+   <sub>If this review was useful, react 👍. Otherwise react 👎.</sub>
+   ```
 
-Or if no issues passed the confidence threshold:
+   Or if no issues passed the confidence threshold:
 
-```text
-### Code review
+   ```text
+   ### Code review
 
-No issues found. Checked for bugs, CLAUDE.md compliance, security red flags, and stack-specific patterns.
-```
+   No issues found. Checked for bugs, CLAUDE.md compliance, security red flags, and stack-specific patterns.
+   ```
 
 10. Confirmation gate before any post. After rendering the review, ask the user exactly: **"Post this as a PR comment via `gh pr comment`? (yes/no)"**. Only on an explicit affirmative reply, run `gh pr comment` with the rendered body (this will prompt for permission, since `gh pr comment` is not pre-authorized — that is intended). On anything other than an explicit yes, stop without posting; the rendered review above is the deliverable.
 
