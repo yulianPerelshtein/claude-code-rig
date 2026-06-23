@@ -80,3 +80,8 @@ exports/
 # Specialized KB lives in the private ccrig-private overlay, never in this public repo.
 domains/bim-ifc-usd-geometry/
 learnings/private-*.md
+
+# The project-journal skill ships a topic file literally named revise-later.md.
+# A common global excludesfile ignores `revise-later.md` (real private study
+# notes); re-include this skill doc so it is always tracked, on any machine.
+!domains/project-journal/revise-later.md
