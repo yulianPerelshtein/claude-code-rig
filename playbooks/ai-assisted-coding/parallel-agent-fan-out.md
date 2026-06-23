@@ -5,8 +5,10 @@ Workflow for analyzing many targets (repos, modules, docs) at once.
 1. **Brief** each agent identically: target path + one-line context, the output
    file path, an exact markdown template, and "return a one-paragraph summary".
 2. **Resilience clause** (mandatory): "write the output file after your first
-   2–3 exploration steps, then append." This survives timeouts (sleep/network)
-   — buffering to the end loses all work.
+   2–3 exploration steps, then append — do not wait until exploration is
+   complete." Incremental append (not a single end-of-run write) bounds the
+   blast radius: a timeout, sleep, or dropped connection loses only the last
+   un-written batch, not the entire run.
 3. **Independence**: no cross-agent communication. The main session synthesizes
    after all return.
 4. **Name the service file** in the prompt — agents otherwise miss the primary

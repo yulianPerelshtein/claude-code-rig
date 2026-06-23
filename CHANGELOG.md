@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4]
+
+### Added
+
+- `domains/project-journal/` — paths-scoped domain for disciplined project
+  working-notes: a stage-gated plan with a resumption protocol, a numbered
+  decision log (rationale + alternatives + divergences), a revise-later parking
+  lot, and per-project `AGENTS.md` conventions.
+- `domains/methodology/living-docs-update-policy.md` — when a human-curated doc
+  earns an update vs. stays put, plus the evidence-cite + confidence-label
+  writing discipline; framed as a policy, not a parallel-KB automation.
+
+### Changed
+
+- `playbooks/ai-assisted-coding/parallel-agent-fan-out.md` — sharpened the
+  incremental-write resilience clause to state the loss bound (a crash loses
+  only the last un-written batch, not the whole run).
+
 ## [0.0.3]
 
 ### Changed
@@ -63,6 +81,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Shareable bundle (`shareable/`, MIT) and exporter (`tools/export-shareable.sh`).
 
 [Unreleased]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main
+[0.0.4]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main
 [0.0.3]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main
 [0.0.2]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main
 [0.0.1]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main

@@ -17,5 +17,9 @@ installs). See the topic files:
 - `derivation-not-templating.md` — derive a personal system from evidence rather
   than cloning a template (#21, arscontexta thesis).
 
-Both are Tier-3 pattern-borrows (`ENHANCEMENTS_BACKLOG.md §4.2 / §4.4`); the
+- `living-docs-update-policy.md` — when a human-curated doc earns an update vs.
+  stays put; evidence-cite + confidence-label writing discipline; why this is a
+  policy, not a parallel-KB automation.
+
+The first two are Tier-3 pattern-borrows (`ENHANCEMENTS_BACKLOG.md §4.2 / §4.4`); the
 source projects themselves are out of scope.
