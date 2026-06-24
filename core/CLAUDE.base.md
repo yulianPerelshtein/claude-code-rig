@@ -7,7 +7,6 @@ Sibling core files (imported so each stays single-purpose and auditable):
 
 - @safety-rules.md — destructive-command and filesystem guardrails.
 - @default-workflows.md — how tasks are executed; TodoWrite usage.
-- @github-content-rules.md — PR/issue body discipline.
 - @reasoning-preferences.md — effort-aware tone and output preferences.
 - @context-budget-policy.md — what loads when; native context management.
 - @context-architecture.md — the 7-layer hierarchy + drift monitor.

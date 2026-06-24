@@ -19,7 +19,9 @@ Create a conventional commit from the working tree above.
    task (skip lock files, build artifacts).
 2. Stage only relevant files with `git add <specific files>`.
 3. Write a conventional commit message: `<type>(<scope>): <description>`.
-   Types: feat, fix, refactor, test, docs, chore, perf.
+   Types: feat, fix, refactor, test, docs, chore, perf. Subject = what + why in
+   one line; body (if any) for the non-obvious why only. No agent-internals or
+   "Generated with …" trailers (see `core/authored-content-rules.md`).
 4. Run `git commit -m "..."` — do NOT use `--no-verify`.
 5. Show the commit hash and summary.
 

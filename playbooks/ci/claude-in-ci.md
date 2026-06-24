@@ -50,5 +50,5 @@ path. Treat CI runs as metered spend and bound them.
 
 - `domains/observability/claude-code-action.md` — evaluation + billing facts.
 - `.github/workflows/claude-code.yml` — the gated workflow definition.
-- `core/github-content-rules.md` — keep any AI-authored PR/issue content within
-  the rig's content rules.
+- `core/authored-content-rules.md` — keep any AI-authored PR/issue content
+  within the rig's content rules.

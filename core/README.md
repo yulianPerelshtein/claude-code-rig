@@ -11,7 +11,6 @@ other knowledge files so each stays single-purpose and auditable.
 | `CLAUDE.base.md` | Layer-1 entry point; imports the rest. |
 | `safety-rules.md` | Destructive-command, secret, and filesystem guardrails. |
 | `default-workflows.md` | Task execution loop; TodoWrite; verification discipline. |
-| `github-content-rules.md` | PR/issue body discipline. |
 | `reasoning-preferences.md` | Tone + effort-aware calibration (`${CLAUDE_EFFORT}`). |
 | `context-budget-policy.md` | Tiered loading + native context management facts. |
 | `context-architecture.md` | The 7-layer hierarchy + drift monitor (flagship reference). |
