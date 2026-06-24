@@ -5,7 +5,6 @@ activates on demand via `paths:`-scoped skills (see `context-budget-policy.md`).
 
 Sibling core files (imported so each stays single-purpose and auditable):
 
-- @coding-style.md — Python lint/format discipline; PR cleanliness.
 - @safety-rules.md — destructive-command and filesystem guardrails.
 - @default-workflows.md — how tasks are executed; TodoWrite usage.
 - @github-content-rules.md — PR/issue body discipline.

@@ -9,7 +9,6 @@ other knowledge files so each stays single-purpose and auditable.
 | File | Purpose |
 |---|---|
 | `CLAUDE.base.md` | Layer-1 entry point; imports the rest. |
-| `coding-style.md` | Python lint/format discipline; magic trailing comma; baseline technique; PR cleanliness. |
 | `safety-rules.md` | Destructive-command, secret, and filesystem guardrails. |
 | `default-workflows.md` | Task execution loop; TodoWrite; verification discipline. |
 | `github-content-rules.md` | PR/issue body discipline. |

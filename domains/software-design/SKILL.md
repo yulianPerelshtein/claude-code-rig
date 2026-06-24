@@ -13,8 +13,7 @@ paths:
 
 # Software design
 
-When working in source files, apply the design principles in
-`core/coding-style.md` and the depth + examples in
+When working in source files, apply the design principles and worked examples in
 `domains/software-design/clean-code.md`. Walk the YAGNI ladder before adding
 code; mark deliberate shortcuts with a `ponytail:` comment naming the upgrade
 path.

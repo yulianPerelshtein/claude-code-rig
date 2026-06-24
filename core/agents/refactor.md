@@ -35,7 +35,7 @@ The incremental loop (both modes):
 6. Know when to stop — leave it better, not perfect; the rest can wait for the
    next visit. Mark anything deferred with a `ponytail:` comment + upgrade path.
 
-Linting: `uv run ruff check --fix .` only — never `ruff format` (see core/coding-style.md).
+Linting: `uv run ruff check --fix .` only — never `ruff format` (see domains/python/ruff-and-formatting.md).
 
 Report: files changed, tests passing, commits made, any breaking changes, and any
 `ponytail:` shortcuts left behind.

@@ -31,7 +31,7 @@ files. If it is empty, the branch has no associated PR; rely on step 3's
 
 4. Launch 6 parallel Sonnet agents. Each returns: file:line, issue description, reason flagged:
 
-   **Agent 1 — CLAUDE.md compliance**: Verify diff adheres to explicit CLAUDE.md rules (type hints, no trailing whitespace, PEP-8, no Windows-filesystem paths under the WSL `/mnt` drive mounts). Only flag direct violations — not general style opinions. Also flag design-principles violations from core/coding-style.md: single-responsibility breaches, mixed abstraction levels, the wrong abstraction, and missing dependency injection. Do NOT flag mechanical limits (length/args/complexity) — CI's Ruff gate owns those.
+   **Agent 1 — CLAUDE.md compliance**: Verify diff adheres to explicit CLAUDE.md rules (type hints, no trailing whitespace, PEP-8, no Windows-filesystem paths under the WSL `/mnt` drive mounts). Only flag direct violations — not general style opinions. Also flag design-principles violations from domains/software-design/clean-code.md: single-responsibility breaches, mixed abstraction levels, the wrong abstraction, and missing dependency injection. Do NOT flag mechanical limits (length/args/complexity) — CI's Ruff gate owns those.
 
    **Agent 2 — Bug scan**: Shallow scan changed lines only. Flag: logic errors, null/undefined handling, off-by-one, boolean logic, broken control flow, missing return values, API misuse, needless complexity / over-engineering a YAGNI ladder would have avoided (judgment, not the mechanical Ruff limits). Ignore pre-existing issues and nitpicks a senior engineer would not raise.
 

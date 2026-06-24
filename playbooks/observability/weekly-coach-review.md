@@ -21,7 +21,7 @@ Weekly, ~10 minutes. Pairs with the weekly retrospective
 
 1. **Code-review findings** — the most rig-relevant of the ~45 rules. Recurring
    anti-patterns here are candidates for a `code-reviewer` agent-memory note or a
-   new `core/coding-style.md` rule.
+   new `domains/software-design/clean-code.md` rule.
 2. **Skill Finder** — it mines repeated prompts and suggests skill candidates. A
    repeated multi-step prompt is a skill: draft it
    (`core/skill-frontmatter-reference.md`), and feed the suggestion into the same
@@ -36,7 +36,7 @@ Weekly, ~10 minutes. Pairs with the weekly retrospective
 - A Skill Finder candidate → author the skill, measure it with
   `playbooks/prompt-optimization/ab-testing-skills.md`.
 - A recurring code-review anti-pattern → one-line rule in `learnings/distilled.md`
-  (or `core/coding-style.md` if universal).
+  (or `domains/software-design/clean-code.md` if universal).
 - A context-management flag → confirm against the OTel cache-hit trend.
 
 Record one or two concrete changes per review — the Coach is an input to the
