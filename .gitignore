@@ -85,3 +85,7 @@ learnings/private-*.md
 # A common global excludesfile ignores `revise-later.md` (real private study
 # notes); re-include this skill doc so it is always tracked, on any machine.
 !domains/project-journal/revise-later.md
+
+# tooling artifacts
+.dmypy.json
+uv.lock
