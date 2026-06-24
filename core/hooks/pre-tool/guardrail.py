@@ -28,6 +28,26 @@ def load_blocklist() -> list[tuple[str, str]]:
     return []
 
 
+def ask(reason: str) -> None:
+    """Prompt the user to confirm the tool call (PreToolUse 'ask' decision).
+
+    Unlike the legacy exit-2 deny path, the JSON decision contract is read only
+    on exit 0, so this must print and exit 0.
+    """
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "ask",
+                    "permissionDecisionReason": reason,
+                }
+            }
+        )
+    )
+    sys.exit(0)
+
+
 def main() -> None:
     try:
         raw = sys.stdin.read()
@@ -39,17 +59,8 @@ def main() -> None:
 
     if tool == "Bash":
         command = data.get("tool_input", {}).get("command", "")
-        # WSL OS-isolation: the Windows mount is off-limits for read AND write,
-        # including via Bash (echo >, cp, tee, cat, ...). The Write/Edit branch
-        # below only covers tool-level writes, so enforce it for Bash here too.
-        if "/mnt/c/" in command:
-            print(
-                "GUARDRAIL BLOCKED: WSL OS-isolation — do not read from or "
-                "write to the Windows mount (/mnt/c/).\n"
-                f"Command was: {command[:200]}",
-                file=sys.stderr,
-            )
-            sys.exit(2)
+        # Destructive patterns are a hard block FIRST — even on /mnt paths,
+        # `rm -rf /mnt/c/...` must be denied, not merely confirmed.
         blocklist = load_blocklist()
         for pattern, reason in blocklist:
             if re.search(pattern, command, re.IGNORECASE):
@@ -58,20 +69,31 @@ def main() -> None:
                     file=sys.stderr,
                 )
                 sys.exit(2)
+        # WSL OS-isolation: the Windows mount is cross-OS and slow (9p). Working
+        # there is almost always a mistake, but a deliberate artifact handoff to
+        # a Windows-native tool is legitimate — so PROMPT for confirmation rather
+        # than hard-blocking.
+        if "/mnt/c/" in command:
+            ask(
+                "WSL OS-isolation: this touches the Windows mount (/mnt/c/), "
+                "which is slow (9p) and outside the Linux filesystem. Confirm "
+                "only if this is a deliberate artifact handoff to a "
+                f"Windows-native tool.\nCommand: {command[:200]}"
+            )
 
     elif tool in ("Write", "Edit"):
         path = (
             data.get("tool_input", {}).get("path", "")
             or data.get("tool_input", {}).get("file_path", "")
         )
-        # Enforce WSL OS-isolation: never write to the Windows filesystem mount.
+        # WSL OS-isolation: prompt (don't hard-block) on writes to the Windows
+        # mount — a finished-artifact handoff is the legitimate case.
         if "/mnt/c/" in path:
-            print(
-                f"BLOCKED: Writing to Windows filesystem ({path}) "
-                "violates OS isolation.",
-                file=sys.stderr,
+            ask(
+                f"WSL OS-isolation: writing to the Windows mount ({path}). "
+                "Confirm only if this is a deliberate artifact handoff to a "
+                "Windows-native tool."
             )
-            sys.exit(2)
 
     sys.exit(0)
 
