@@ -1,8 +1,7 @@
 # Global Architecture & Workflow Context (base)
 
-This is the always-loaded Layer-1 core. It holds only **universal** rules —
-nothing project-, employer-, or vendor-specific. Domain knowledge activates
-on demand via `paths:`-scoped skills (see `context-budget-policy.md`).
+This is the always-loaded Layer-1 core: universal rules only. Domain knowledge
+activates on demand via `paths:`-scoped skills (see `context-budget-policy.md`).
 
 Sibling core files (imported so each stays single-purpose and auditable):
 
@@ -19,7 +18,6 @@ Sibling core files (imported so each stays single-purpose and auditable):
 - ALL commands run in native Linux/Ubuntu.
 - NEVER read or write the Windows filesystem mount (the `/mnt/<drive>/` path).
   Keep all work on the Linux filesystem.
-- NEVER use Windows-style paths in WSL commands.
 
 ## Multi-checkout WSL ↔ Windows sync
 
@@ -41,14 +39,12 @@ When the same repository is checked out on both WSL and Windows:
 
 ## Execution
 
-- Use Docker / docker-compose for backend services unless told otherwise.
 - Check distilled learnings (and native `MEMORY.md`) before retrying any
   failed operation.
 
 ## Agent behaviour
 
 - Be concise. No compliments or filler (see @reasoning-preferences.md).
-- On task completion, run the `wrap-up` skill to log learnings.
 - NEVER add `Co-Authored-By:` trailers to commit messages.
 - NEVER add authorship or copyright headers to new files (no "Created by …",
   no `Copyright (c) … <COMPANY>`, no date stamps). Follow the existing project
