@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5]
+
+### Added
+
+- Cost / rate-limit statusline (`core/statusline/`): a stdin-native status line
+  (context usage, tokens, session cost, 5h / 7d rate-limit windows) with no API
+  calls or network. Enable via a `statusLine` entry in your settings.json (a
+  plugin can't register one).
+
+### Removed
+
+- The vestigial `shareable/` tarball subtree and its exporter
+  (`tools/export-shareable.sh` + sanitize/verify helpers). The repo is public +
+  MIT, so the whole repo is the shared artifact; the generic-hooks/commands
+  mirrors had drifted behind `core/`. The one live, unique piece — the statusline
+  — moved into `core/statusline/`.
+
+### Changed
+
+- Trimmed the always-loaded Layer-1 core (~4205 → ~1520 tokens): deleted
+  `coding-style.md` (duplicated paths-scoped domains), dissolved
+  `context-budget-policy.md`, demoted `context-architecture.md` and the
+  authored-content rules out of always-loaded context, and fixed an output-style
+  bug that stripped built-in coding instructions.
+
 ## [0.0.4]
 
 ### Added
