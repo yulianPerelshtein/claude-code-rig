@@ -2,7 +2,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/session/session_start.sh" }
         ]
@@ -30,7 +30,7 @@
         ]
       },
       {
-        "matcher": "mcp__",
+        "matcher": "mcp__.*",
         "hooks": [
           { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/post-tool/mcp_trimmer.py" }
         ]
@@ -87,13 +87,6 @@
         ]
       }
     ],
-    "TaskCompleted": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/task-completed/task_completed.sh" }
-        ]
-      }
-    ],
     "PreCompact": [
       {
         "matcher": "auto|manual",
@@ -113,14 +106,14 @@
     "SubagentStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_start.sh" }
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_start.py" }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_stop.sh" }
+          { "type": "command", "command": "uv run python ${CLAUDE_PLUGIN_ROOT}/core/hooks/subagent/subagent_stop.py" }
         ]
       }
     ]

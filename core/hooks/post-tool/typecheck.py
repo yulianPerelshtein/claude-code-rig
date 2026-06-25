@@ -48,8 +48,11 @@ def main() -> None:
     )
 
     if result.returncode == 1:
+        # Exit 2 is the only PostToolUse code that surfaces stderr to Claude
+        # (the tool already ran, so this cannot block — it is advisory feedback).
+        # Exit 1 would only show a first-line "hook error" notice to the user.
         print(f'TYPE ERRORS in {path}:\n{result.stdout.strip()}', file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
 
     sys.exit(0)
 

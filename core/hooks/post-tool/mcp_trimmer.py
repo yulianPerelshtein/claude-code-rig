@@ -21,7 +21,7 @@ def main() -> None:
         if not tool_name.startswith("mcp__"):
             sys.exit(0)
 
-        tool_output = data.get("tool_output", "")
+        tool_output = data.get("tool_response", "")
         raw = tool_output if isinstance(tool_output, str) else json.dumps(tool_output)
 
         if len(raw) <= MCP_TRIM_THRESHOLD:
@@ -32,7 +32,7 @@ def main() -> None:
                 {
                     "hookSpecificOutput": {
                         "hookEventName": "PostToolUse",
-                        "updatedMCPToolOutput": (
+                        "updatedToolOutput": (
                             raw[:MCP_TRIM_THRESHOLD]
                             + f"\n\n[OUTPUT TRIMMED: {len(raw)} chars exceeded "
                             f"{MCP_TRIM_THRESHOLD} threshold. "

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6]
+
+### Fixed
+
+- Hooks that emitted through channels Claude Code ignores, so they were silent
+  no-ops, now use the documented output contracts:
+  - `mcp_trimmer` read the wrong stdin key (`tool_output`), emitted the wrong
+    rewrite field (`updatedMCPToolOutput`), and was registered with the matcher
+    `mcp__` (an exact-string match that no real tool name satisfies) — three
+    independent reasons it never trimmed anything. Now reads `tool_response`,
+    emits `updatedToolOutput`, matches `mcp__.*`, and has test coverage.
+  - `subagent_start` / `subagent_stop` injected context via plain stdout (not
+    shown to the agent); rewritten to emit `hookSpecificOutput.additionalContext`.
+    `subagent_start` keeps the no-full-`cat`-learnings token discipline.
+  - `pre_compact` kept its working state backup but dropped the model-directed
+    nudge that only reached the debug log.
+  - `typecheck` reported type errors with exit 1 (first-line-only hook error);
+    now exit 2, the code that surfaces stderr to Claude.
+  - `SessionStart` fired only on `startup`; now also on `resume|clear|compact`.
+
+### Removed
+
+- The `TaskCompleted` hook. It pushed a `/wrap-up` reminder to Claude via stdout,
+  which the model never sees — and `/wrap-up` is non-auto-invocable, so the
+  reminder was addressed to the wrong actor twice over. The `/wrap-up` discipline
+  lives in `default-workflows.md` (user-invoked).
+
 ## [0.0.5]
 
 ### Added

@@ -5,7 +5,12 @@
 # Rescoped from the GSD context-monitor idea: hook stdin carries no context
 # budget (that field is statusline-only), so this acts on the guaranteed
 # PreCompact event rather than a non-existent 35%/25% PostToolUse read. It backs
-# up any tracked state file and reminds the session to run the save-state skill.
+# up any tracked state file before compaction can drop it.
+#
+# PreCompact stdout goes to the debug log only and PreCompact supports no
+# additionalContext channel, so this hook does NOT try to nudge the model — it
+# performs the backup side effect and logs one honest line. (A genuine
+# post-compaction nudge would belong on SessionStart matcher=compact.)
 set -uo pipefail
 
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
@@ -27,13 +32,9 @@ for f in "${STATE_FILES[@]}"; do
     fi
 done
 
-echo "=== PRE-COMPACT NOTICE ==="
+# Debug-log only (PreCompact stdout is not shown to the model) — one honest line.
 if [ -n "${found}" ]; then
-    echo "Context compaction imminent. Backed up task state to ${BACKUP_DIR}/ (${TIMESTAMP})."
-    echo "Run the save-state skill now to capture anything not yet written, then"
-    echo "re-read the backup + ~/.claude/learnings.md after compaction to restore context."
+    echo "pre-compact: backed up ${found} to ${BACKUP_DIR}/ (${TIMESTAMP})"
 else
-    echo "Context compaction imminent and no task-state file was found."
-    echo "Run the save-state skill to snapshot the current objective before state is lost."
+    echo "pre-compact: no task-state file found to back up"
 fi
-echo "=========================="
