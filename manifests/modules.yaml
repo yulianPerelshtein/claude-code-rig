@@ -20,7 +20,7 @@ modules:
   - {id: playbooks/wsl, status: present, owner: yulianPerelshtein, summary: "WSL playbooks"}
   - {id: playbooks/code-review, status: present, owner: yulianPerelshtein, summary: "code-review playbooks"}
   - {id: playbooks/ai-assisted-coding, status: present, owner: yulianPerelshtein, summary: "AI-assisted-coding playbooks"}
-  - {id: shareable/dashboard, status: planned, owner: yulianPerelshtein, summary: "statusline dashboard"}
+  - {id: core/statusline, status: present, owner: yulianPerelshtein, summary: "cost / rate-limit statusline"}
   - {id: core-budget, status: present, owner: yulianPerelshtein, summary: "budget config + cost tracker only"}
   - {id: cc-extensions/all, status: external, owner: third-party, summary: "5 git-cloned skill packages"}
   - {id: cc-extensions/superpowers, status: external, owner: obra, summary: "superpowers skills"}

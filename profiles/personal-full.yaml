@@ -10,7 +10,7 @@ modules:
   - all-domains
   - all-playbooks
   - all-templates
-  - shareable/dashboard
+  - core/statusline
   - cc-extensions/all
   - marketplace-plugins/all
 

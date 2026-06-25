@@ -6,5 +6,5 @@ modules:
   - domains/cloud-aws
   - domains/devops
   - playbooks/debugging
-  - shareable/dashboard
+  - core/statusline
   - cc-extensions/superpowers

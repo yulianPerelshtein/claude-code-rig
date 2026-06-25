@@ -6,8 +6,8 @@
 #   - the CI secret  REDACTION_PATTERNS  (the secret-scan workflow writes it to
 #     that path before running the blocklist).
 #
-# Both check-redactions.sh and sanitize.py prefer the private source above and
-# fall back to this template. The placeholders below are illustrative only —
+# check-redactions.sh prefers the private source above and falls back to this
+# template. The placeholders below are illustrative only —
 # replace them in your local/secret copy with the identifiers you must redact.
 # One Python-regex per non-comment, non-blank line.
 AcmeCorp

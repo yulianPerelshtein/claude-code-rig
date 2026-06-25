@@ -20,12 +20,9 @@ modules:
     kind: copy
     copies:
       - {src: "core/CLAUDE.base.md", dest: ".claude/CLAUDE.md"}
-      - {src: "core/coding-style.md", dest: ".claude/coding-style.md"}
       - {src: "core/reasoning-preferences.md", dest: ".claude/reasoning-preferences.md"}
       - {src: "core/safety-rules.md", dest: ".claude/safety-rules.md"}
       - {src: "core/default-workflows.md", dest: ".claude/default-workflows.md"}
-      - {src: "core/github-content-rules.md", dest: ".claude/github-content-rules.md"}
-      - {src: "core/context-budget-policy.md", dest: ".claude/context-budget-policy.md"}
       - {src: "core/context-architecture.md", dest: ".claude/context-architecture.md"}
       - {src: "core/settings.template.json", dest: ".claude/settings.template.json"}
       - {src: "core/skills/", dest: ".claude/skills/"}
@@ -95,11 +92,11 @@ modules:
     kind: copy
     copies: [{src: "playbooks/ai-assisted-coding/", dest: ".claude/playbooks/ai-assisted-coding/"}]
 
-  # Flagship dashboard.
-  shareable/dashboard:
+  # Cost / rate-limit statusline.
+  core/statusline:
     kind: copy
     copies:
-      - {src: "shareable/dashboard/", dest: ".claude/utils/"}
+      - {src: "core/statusline/", dest: ".claude/statusline/"}
 
   # Virtual composite: just the budget config + cost tracker.
   core-budget:

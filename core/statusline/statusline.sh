@@ -2,12 +2,13 @@
 # statusline.sh — render the Claude Code status line.
 #
 # Reads the statusline JSON on stdin, pipes it through statusline_parse.py, and
-# colourises the pipe-delimited result. Installed to ~/.claude/utils/ alongside
-# statusline_parse.py (see install.sh).
+# colourises the pipe-delimited result. The parser is resolved relative to this
+# script, so it works wherever the rig lives (plugin dir, ~/.claude, a clone).
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INPUT=$(cat)
 
 PARSED=$(echo "$INPUT" \
-    | python3 ~/.claude/utils/statusline_parse.py 2>/dev/null \
+    | python3 "$HERE/statusline_parse.py" 2>/dev/null \
     || echo "0|░░░░░░░░░░░░░░░░░░░░|0|0|0.00|||?||")
 
 IFS='|' read -r USED BAR IN_TOK OUT_TOK COST SESSION_STR WEEKLY_STR MODEL_NAME AGENT_NAME WT_BRANCH \

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the stdin-native statusline parser.
+"""Tests for core/statusline/statusline_parse.py (the stdin-native statusline parser).
 
 Runs the parser as a subprocess (most faithful to how Claude Code invokes it)
 with HOME pointed at a tmp dir so the mid-stream state file never touches the
@@ -13,10 +13,9 @@ import sys
 import time
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-DASHBOARD = HERE.parent
-PARSER = DASHBOARD / "statusline_parse.py"
-FIXTURES = HERE / "fixtures"
+REPO = Path(__file__).resolve().parents[2]
+PARSER = REPO / "core" / "statusline" / "statusline_parse.py"
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 # Import the module for pure-helper unit tests.
 _spec = importlib.util.spec_from_file_location("statusline_parse", PARSER)

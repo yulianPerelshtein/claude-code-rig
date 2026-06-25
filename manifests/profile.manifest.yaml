@@ -13,5 +13,4 @@ profiles:
   - {name: cloud-aws, file: profiles/cloud-aws.yaml}
   - {name: ai-assisted-coding, file: profiles/ai-assisted-coding.yaml}
   - {name: claude-dashboard, file: profiles/claude-dashboard.yaml}
-  - {name: shareable-dashboard, file: profiles/shareable-dashboard.yaml}
   - {name: future-work-laptop, file: profiles/future-work-laptop.yaml}
