@@ -2,7 +2,9 @@
 
 Everything here ships in **all** profiles and carries no company, project, or
 vendor references. `CLAUDE.base.md` is Layer 1 (always loaded) and imports the
-other knowledge files so each stays single-purpose and auditable.
+always-loaded knowledge files so each stays single-purpose and auditable.
+`context-architecture.md` is on-demand reference (not imported) — pull it with
+`@core/context-architecture.md` when editing the rig's structure.
 
 ## Knowledge files
 
@@ -11,9 +13,8 @@ other knowledge files so each stays single-purpose and auditable.
 | `CLAUDE.base.md` | Layer-1 entry point; imports the rest. |
 | `safety-rules.md` | Destructive-command, secret, and filesystem guardrails. |
 | `default-workflows.md` | Task execution loop; TodoWrite; verification discipline. |
-| `reasoning-preferences.md` | Tone + effort-aware calibration (`${CLAUDE_EFFORT}`). |
-| `context-budget-policy.md` | Tiered loading + native context management facts. |
-| `context-architecture.md` | The 7-layer hierarchy + drift monitor (flagship reference). |
+| `reasoning-preferences.md` | Tone + effort-aware calibration. |
+| `context-architecture.md` | Layer/tier loading + precedence + drift monitor (on-demand reference, not always-loaded). |
 
 ## Executable core
 

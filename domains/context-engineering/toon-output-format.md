@@ -47,5 +47,5 @@ with uniform fields), implemented standalone — never depend on Coralogix.
 ## See also
 
 - `core/skill-frontmatter-reference.md` — output-format design (this is one tip).
-- `core/context-budget-policy.md` — native token reduction first.
+- `domains/context-engineering/native-context-levers.md` — native token reduction first.
 - `domains/context-engineering/headroom.md` — the input-side compression lever (opt-in).

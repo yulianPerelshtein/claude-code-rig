@@ -32,7 +32,7 @@ Monthly (or whenever a bill surprises you), ~10 minutes.
 ## Turn findings into action
 
 - Cache busting → audit what changes between turns (see
-  `core/context-budget-policy.md`).
+  `domains/context-engineering/native-context-levers.md`).
 - Wrong model for the job → right-size with `model:` frontmatter
   (`core/skill-frontmatter-reference.md`).
 - High reject rate on a skill → run `/optimize-prompt` on it, then measure with

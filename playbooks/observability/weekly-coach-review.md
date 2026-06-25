@@ -27,7 +27,7 @@ Weekly, ~10 minutes. Pairs with the weekly retrospective
    (`core/skill-frontmatter-reference.md`), and feed the suggestion into the same
    pipeline as a dream-report candidate.
 3. **Session hygiene + context management** — flags long, unfocused sessions or
-   context bloat; cross-check against `core/context-budget-policy.md`.
+   context bloat; cross-check against `domains/context-engineering/native-context-levers.md`.
 4. **Prompt quality** — low-scoring prompts are `/optimize-prompt` targets
    (`playbooks/prompt-optimization/prompt-checklist.md`).
 

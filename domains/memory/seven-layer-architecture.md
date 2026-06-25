@@ -55,4 +55,4 @@ zero-egress. If Hermes is ever adopted, the full install goes in
 
 - `core/context-architecture.md` — the rig's 7-layer precedence model.
 - `domains/memory/serena.md` — the retrieval/navigation layer.
-- `core/context-budget-policy.md` — native `MEMORY.md` as the memory backbone.
+- `domains/context-engineering/native-context-levers.md` — native `MEMORY.md` as the memory backbone.

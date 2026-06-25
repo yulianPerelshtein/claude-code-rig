@@ -64,7 +64,7 @@ Like any multi-tool MCP server, serena's tool schemas are deferred by default
 (MCP tool-schema deferral via `ENABLE_TOOL_SEARCH`, on unless set to `false`;
 the rig pins `"true"` — see `domains/context-engineering/native-context-levers.md`),
 and `mcp_trimmer.py` trims large responses. See
-`core/context-budget-policy.md`.
+`domains/context-engineering/native-context-levers.md`.
 
 ## Relationship to native memory
 
@@ -77,7 +77,7 @@ pairing covers it without an egress-by-default knowledge graph.
 ## See also
 
 - `.mcp.json` — the server declaration.
-- `core/context-budget-policy.md` — native `MEMORY.md` stance.
+- `domains/context-engineering/native-context-levers.md` — native `MEMORY.md` stance.
 - `domains/context-engineering/native-context-levers.md` — `ENABLE_TOOL_SEARCH` value table + the other #27 levers.
 - `skills/custom/repo-map/SKILL.md` — the breadth-first orientation map that complements serena's depth-first symbol lookup (#28).
 - `domains/context-engineering/claude-context.md` — scale-gated vector search for million-LOC / fuzzy recall only; serena is the default otherwise (#29).

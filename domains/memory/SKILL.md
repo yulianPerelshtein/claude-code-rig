@@ -14,5 +14,5 @@ serena MCP server (the locked Tier-1 retrieval lever, `SOTA_REFRESH.md §7`).
 
 serena complements — does not replace — the **native** memory backbone:
 `MEMORY.md` (machine-local, zero-egress, survives `/compact`) and `CLAUDE.md`
-(see `core/context-budget-policy.md`). gbrain was **dropped** for coding use;
+(see `domains/context-engineering/native-context-levers.md`). gbrain was **dropped** for coding use;
 serena + native `MEMORY.md` cover it without an egress-by-default dependency.

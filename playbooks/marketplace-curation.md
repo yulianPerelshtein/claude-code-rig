@@ -34,7 +34,7 @@ the normal path, so they're not "new" picks:
   rig's own hooks/agents already cover these; net new surface for little gain.
 - **SaaS long-tail plugins** — anything that's a thin wrapper around a paid
   hosted service. Prefer a local/native equivalent first (the rig's standing
-  bias, `core/context-budget-policy.md`).
+  bias, `domains/context-engineering/native-context-levers.md`).
 
 ## How to vet a marketplace plugin before installing
 

@@ -51,7 +51,7 @@ context:
 - The `mcp_trimmer.py` PostToolUse hook (already wired in `hooks.json`) trims
   oversized MCP tool responses so a large page snapshot doesn't flood context.
 
-See `core/context-budget-policy.md` for the rig's native-context-first stance.
+See `domains/context-engineering/native-context-levers.md` for the rig's native-context-first stance.
 
 ## Escalation (not default)
 
@@ -63,6 +63,6 @@ unless Playwright MCP demonstrably fails on the page.
 ## See also
 
 - `.mcp.json` — the server declaration.
-- `core/context-budget-policy.md` — native-context-first stance.
+- `domains/context-engineering/native-context-levers.md` — native-context-first stance.
 - `domains/context-engineering/native-context-levers.md` — `ENABLE_TOOL_SEARCH` value table + the other #27 levers.
 - `core/hooks/post-tool/mcp_trimmer.py` — trims oversized MCP tool output.

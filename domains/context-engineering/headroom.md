@@ -69,7 +69,7 @@ Reversible by `unalias` + `pipx uninstall headroom-ai`. The
 
 ## See also
 
-- `core/context-budget-policy.md` — native token reduction (try this first).
+- `domains/context-engineering/native-context-levers.md` — native token reduction (try this first).
 - `playbooks/token-economy/wrap-claude-code-with-headroom.md` — the wrap/MCP/proxy
   workflow + A/B methodology.
 - `profiles/enhanced-tier2.yaml` — the opt-in profile that declares it.

@@ -81,10 +81,31 @@ control (observability only); the rig wires it to append a JSONL audit line so
 you can debug *which* instruction files actually loaded and why (path-glob rules,
 nested `CLAUDE.md`, includes). See `core/hooks/instructions-loaded/`.
 
+## 6. Compaction & memory lifecycle — what survives, what to rely on
+
+Prefer native token reduction before any third-party tool: prompt caching,
+context editing, auto-compaction, and skills lazy-loading. Evaluate any
+token-economy tool against these first.
+
+- **Auto-compaction is native.** On compaction, Claude Code re-attaches the most
+  recent invocation of each skill (capped ~5,000 tokens per skill, ~25,000
+  combined, oldest dropped first). Skill *descriptions* are NOT re-injected after
+  compaction — only skills you actually invoked are preserved.
+- **`/context`** shows live capacity with a per-category breakdown.
+  **`PreCompact`/`PostCompact`** hooks fire around a compaction (both support
+  `manual`/`auto` matchers; `PreCompact` can block, `PostCompact` cannot).
+  Proactive save-state belongs on `PreCompact`. Hook stdin does NOT expose
+  remaining context budget — only the statusline payload carries
+  `context_window.*` (`used_percentage`, `remaining_percentage`, …). Do not build
+  a PostToolUse "N% remaining" monitor.
+- **`MEMORY.md`** is native, machine-local, zero-egress, and survives `/compact`
+  (re-injected from disk). It is the cross-session memory backbone alongside
+  `CLAUDE.md` (also re-read from disk post-compaction).
+
 ## See also
 
 - `core/settings.template.json` — the starting settings these keys live in.
-- `core/context-budget-policy.md` — the native-context-first stance overall.
+- `core/context-architecture.md` — the rig's layer/tier loading + precedence model.
 - `domains/memory/serena.md` — the MCP whose schemas `ENABLE_TOOL_SEARCH` defers.
 - `playbooks/observability/otel-insights-review.md` — pairs context cost with the
   cache-ratio metric to see deferral working.

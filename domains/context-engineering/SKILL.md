@@ -9,7 +9,7 @@ description: >-
 # context-engineering
 
 How to spend fewer tokens for the same work. **Native levers first** (see
-`core/context-budget-policy.md` and `native-context-levers.md`): prompt caching,
+`native-context-levers.md`): prompt caching,
 context editing, auto-compaction, skills lazy-loading, MCP tool-schema deferral
 (`ENABLE_TOOL_SEARCH`, on by default). Evaluate any third-party
 token-economy tool against those before adopting it.

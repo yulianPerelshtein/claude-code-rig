@@ -5,7 +5,7 @@ Cross-project operational patterns, sanitized. Each entry is a
 (what/how only). In-depth write-ups live in the referenced `domains/` and
 `playbooks/` docs; this file is the fast index.
 
-Not auto-loaded on session start (see `core/context-budget-policy.md`). Pull
+Not auto-loaded on session start (see `core/context-architecture.md`). Pull
 specific entries on demand or via a `load-learnings` skill.
 
 ---

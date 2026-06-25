@@ -51,6 +51,6 @@ own hooks/skills are unaffected — headroom is purely an interception layer.
 ## See also
 
 - `domains/context-engineering/headroom.md` — evaluation summary + caveats.
-- `core/context-budget-policy.md` — native reduction to try before any wrapper.
+- `domains/context-engineering/native-context-levers.md` — native reduction to try before any wrapper.
 - `playbooks/observability/otel-insights-review.md` — measure the cache/cost
   impact over time.

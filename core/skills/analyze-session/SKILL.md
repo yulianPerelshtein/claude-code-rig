@@ -55,7 +55,7 @@ or known-bad session, then act on the routing.
      `~/.claude/learnings.md`, applied via the `/dream-report` human-in-the-loop
      path (do not append silently); it is later curated into the repo's
      `learnings/distilled.md`.
-   - cache / cost finding → `core/context-budget-policy.md` +
+   - cache / cost finding → `domains/context-engineering/native-context-levers.md` +
      `playbooks/observability/otel-insights-review.md`.
 6. **Present, then ask.** Output the rubric verdicts + the routed actions as a
    short checklist. Apply nothing without confirmation; this skill diagnoses and

@@ -6,7 +6,7 @@ argument-hint: "[category]"
 ---
 
 Load a targeted subset of distilled learnings instead of the whole file (kept
-out of the default context per `context-budget-policy.md`).
+out of the default context per `core/context-architecture.md`).
 
 `$ARGUMENTS` is a category keyword (e.g. `ruff`, `aws`, `wsl`, `statusline`,
 `tdd`, `git`). Steps:

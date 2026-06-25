@@ -30,7 +30,7 @@ Run it more often only if a week was unusually rough.
    - recurring failure category → a one-line rule into `~/.claude/learnings.md`
      via the `/dream-report` path (never appended silently; later curated into
      the repo's `learnings/distilled.md`);
-   - cache/cost → `core/context-budget-policy.md` +
+   - cache/cost → `domains/context-engineering/native-context-levers.md` +
      `playbooks/observability/otel-insights-review.md`.
 4. **Close the loop.** Nothing is auto-applied — you confirm each fix. The payoff
    compounds: each cycle removes a recurring inefficiency rather than just

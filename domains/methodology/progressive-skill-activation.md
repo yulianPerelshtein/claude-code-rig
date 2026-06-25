@@ -24,7 +24,7 @@ So the rig's structure is already aligned. The actionable takeaway is a
 
 - Don't defeat native lazy-loading by stuffing reference material into
   always-loaded `core/` files — push it into `domains/`/`playbooks/` that load on
-  demand (`core/context-budget-policy.md`).
+  demand (`core/context-architecture.md`).
 - If session-start context feels heavy, audit what's actually front-loaded
   (`/context`), and compare the rig's activation footprint against
   `cc-extensions/superpowers/` — if ours loads more eagerly than necessary,
@@ -40,5 +40,5 @@ services) — it duplicates Claude Code's role. Lesson only.
 ## See also
 
 - `core/skill-frontmatter-reference.md` — `disable-model-invocation` / `paths:` / `description`.
-- `core/context-budget-policy.md` — tiered, activation-gated loading.
+- `core/context-architecture.md` — tiered, activation-gated loading.
 - `playbooks/skill-techniques/` — the native frontmatter techniques in practice.

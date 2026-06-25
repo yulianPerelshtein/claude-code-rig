@@ -1,15 +1,14 @@
 # Global Architecture & Workflow Context (base)
 
 This is the always-loaded Layer-1 core: universal rules only. Domain knowledge
-activates on demand via `paths:`-scoped skills (see `context-budget-policy.md`).
+activates on demand via `paths:`-scoped skills; the loading/precedence model is
+`core/context-architecture.md` (on-demand reference, pull when editing the rig).
 
 Sibling core files (imported so each stays single-purpose and auditable):
 
 - @safety-rules.md — destructive-command and filesystem guardrails.
 - @default-workflows.md — how tasks are executed; TodoWrite usage.
 - @reasoning-preferences.md — effort-aware tone and output preferences.
-- @context-budget-policy.md — what loads when; native context management.
-- @context-architecture.md — the 7-layer hierarchy + drift monitor.
 
 ## System Environment: WSL2 Ubuntu
 
