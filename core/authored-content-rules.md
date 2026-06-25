@@ -12,6 +12,9 @@ a reviewer can't reconstruct from the code — and stays out of the way otherwis
 
 - NEVER reference the AI assistant, agents, skills, plan files, `.claude/`
   artifacts, or internal session notes. None of that is part of the change.
+  This includes plan/audit section labels (e.g. `D2`, `F2`, "phase N") — name
+  what changed, not its tracking ID. Git history must stand on its own to a
+  reader with no access to the plan.
 - No "Generated with …" trailers, no emojis, no marketing tone.
 - Write like a person on a small team talking to peers, not like a form.
   Concise and specific beats complete.
