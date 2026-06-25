@@ -9,9 +9,7 @@
 
 ## Effort awareness
 
-Claude Code reports the current reasoning effort to hooks/skills as
-`${CLAUDE_EFFORT}` (levels: `low`, `medium`, `high`, `xhigh`, `max`). Calibrate
-depth to the level:
+Calibrate depth to the session's reasoning-effort level:
 
 | Level | Posture |
 |---|---|
@@ -20,5 +18,3 @@ depth to the level:
 | xhigh / max | Deep: surface assumptions, check load-bearing claims against sources, consider alternatives, prefer a verification pass before propagating consequential work. |
 
 - Match verbosity to effort: terse at low, thorough at xhigh — but never pad.
-- A skill or agent may pin a `model:` / `effort:` in its frontmatter when its
-  task needs a fixed level regardless of the session default.
