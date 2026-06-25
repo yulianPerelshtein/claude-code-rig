@@ -39,8 +39,7 @@ installer for locked-down machines). It adds:
 | `manifests/` | YAML-driven install + module + marketplace state |
 | `install/` | WSL bootstrap, profile installer, dry-run, backup, rollback, validate, uninstall |
 | `profiles/` | install profiles (see below) |
-| `tools/` | CLI helpers, shareable-bundle exporter, sanitizer |
-| `shareable/` | sanitized exportable subset (dashboard + generic hooks/commands/playbooks), MIT |
+| `tools/` | CLI helpers (cc-doctor, hooks-profiler) |
 
 ## Install
 
@@ -58,16 +57,23 @@ option): clone, then run `install/bootstrap-wsl.sh`, or
 rollback, and uninstall; the source→target file map lives in `manifests/`.
 
 Profiles: `minimal-core`, `personal-full`, `backend`, `bim-geometry-usd`,
-`cloud-aws`, `ai-assisted-coding`, `claude-dashboard`, `shareable-dashboard`,
-`enhanced-tier2`, `future-work-laptop`.
+`cloud-aws`, `ai-assisted-coding`, `claude-dashboard`, `enhanced-tier2`,
+`future-work-laptop`.
 
-Optional cost/usage statusline: `bash shareable/dashboard/install.sh`.
+## Statusline
 
-## Shareable bundle
+A cost / rate-limit statusline (`core/statusline/`) renders context-window
+usage, token counts, session cost, and the 5-hour / 7-day rate-limit windows —
+all from the JSON Claude Code passes on stdin (no API calls, no network). Because
+a plugin can't register a `statusLine`, enable it by adding to your
+`~/.claude/settings.json`:
 
-`tools/export-shareable.sh` produces a sanitized, **MIT-licensed** bundle from
-`shareable/` — the statusline dashboard plus generic hooks/commands/playbooks —
-safe to use or share on its own.
+```json
+"statusLine": { "type": "command", "command": "bash ~/.claude/statusline/statusline.sh" }
+```
+
+(Point the path at wherever the rig lives — the script resolves its parser
+relative to itself.)
 
 ## Safety
 

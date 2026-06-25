@@ -16,3 +16,7 @@ the request is invalid` (CLI) or boto3 silently using the wrong/no credentials.
 
 Applies to **any** AWS access in an SSO-backed account: CLI (`aws ecs …`,
 `aws cloudformation …`) and boto3 alike.
+
+If a script must be portable across profiles, accept the profile name as an
+argument and construct `boto3.Session(profile_name=...)` explicitly rather than
+relying on the ambient `AWS_PROFILE`.

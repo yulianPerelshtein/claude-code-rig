@@ -78,7 +78,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `/dream-report` → distilled learnings) and a session performance analyzer.
 - Routines: a registry-driven runner with manual / scheduled (systemd) / event
   triggers and an enforced outcome policy.
-- Shareable bundle (`shareable/`, MIT) and exporter (`tools/export-shareable.sh`).
+- Cost / rate-limit statusline (`core/statusline/`): a stdin-native status line
+  (context usage, tokens, session cost, 5h / 7d rate-limit windows) with no API
+  calls or network.
 
 [Unreleased]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main
 [0.0.4]: https://github.com/yulianPerelshtein/claude-code-rig/commits/main

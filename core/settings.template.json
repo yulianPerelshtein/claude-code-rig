@@ -3,6 +3,10 @@
   "env": {
     "ENABLE_TOOL_SEARCH": "true"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline/statusline.sh"
+  },
   "claudeMdExcludes": [
     "**/vendor/**/CLAUDE.md",
     "**/node_modules/**/CLAUDE.md"

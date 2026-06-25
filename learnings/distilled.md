@@ -24,7 +24,7 @@ Do NOT chain sequential `sleep N && check` background tasks — it floods the no
 
 ## 2026-03-26 STATUSLINE-MID-STREAM-TOKEN-SUPPRESSION
 
-To avoid a flickering statusline during generation, keep a state file `{last_out, stable_out}`: if `current_out == last_out` generation stopped → advance `stable_out`; if different → still generating → keep `stable_out`. Always display `stable_out`. (Reused by the dashboard module — `shareable/dashboard/`.)
+To avoid a flickering statusline during generation, keep a state file `{last_out, stable_out}`: if `current_out == last_out` generation stopped → advance `stable_out`; if different → still generating → keep `stable_out`. Always display `stable_out`. (Used by the statusline — `core/statusline/`.)
 
 ## 2026-03-19 POWERSHELL-LINE-CONTINUATION
 

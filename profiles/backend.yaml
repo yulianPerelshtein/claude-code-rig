@@ -11,6 +11,6 @@ modules:
   - domains/devops
   - domains/ai-assisted-coding
   - all-playbooks
-  - shareable/dashboard
+  - core/statusline
   - cc-extensions/superpowers
   - cc-extensions/wshobson-agents
