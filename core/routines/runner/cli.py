@@ -182,10 +182,25 @@ def execute(
 def _parse_args(argv) -> argparse.Namespace:
     ap = argparse.ArgumentParser(prog="run-routine")
     ap.add_argument("name")
-    ap.add_argument("--target", default=os.getcwd())
+    # Default None so main() can distinguish "not supplied" (resolve from the
+    # routine's target_default) from an explicit --target the caller passed.
+    ap.add_argument("--target", default=None)
     ap.add_argument("--registry", default=str(DEFAULT_REGISTRY))
     ap.add_argument("--dry-run", action="store_true")
     return ap.parse_args(argv)
+
+
+def resolve_target(routine: Routine, explicit: str | None, registry_path: Path) -> Path:
+    """Where the routine runs. An explicit --target always wins; otherwise honor
+    the routine's declared target_default (`rig` -> the rig repo, `cwd` -> the
+    caller's working directory). Without this, a `rig`-targeted routine
+    (weekly-retro, monthly-drift) would silently run against whatever cwd the
+    caller happened to be in — e.g. opening a draft PR on the wrong repo."""
+    if explicit is not None:
+        return Path(explicit).resolve()
+    if routine.target_default == "rig":
+        return rig_root(registry_path)
+    return Path(os.getcwd()).resolve()
 
 
 def main(argv=None) -> int:
@@ -199,7 +214,7 @@ def main(argv=None) -> int:
     if not routine.enabled:
         print(f"routine disabled: {args.name}", file=sys.stderr)
         return 3
-    target = Path(args.target).resolve()
+    target = resolve_target(routine, args.target, registry_path)
 
     if args.dry_run:
         invocation = build_invocation(routine, target, registry_path)

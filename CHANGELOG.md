@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7]
+
+### Fixed
+
+- Routine `target_default` was validated but never applied: the CLI always
+  defaulted `--target` to the caller's cwd and the `/routines` skill hardcoded
+  `--target "$PWD"`, so a `rig`-targeted routine (weekly-retro, monthly-drift)
+  run from any other directory would act on — and open a draft PR against — the
+  wrong repo. The runner now resolves the target from `target_default` unless an
+  explicit `--target` is passed.
+- `install/backup.sh` archived nearly all of `~/.claude` (only six excludes),
+  sweeping personal history, spend logs, clipboard cache, per-session data, org
+  policy, workspace identity, and `settings.json` into a portable tgz. Excludes
+  expanded to the full never-leave-machine set, plus a pre-write scan that
+  refuses if a credential-shaped string is staged.
+
 ## [0.0.6]
 
 ### Fixed

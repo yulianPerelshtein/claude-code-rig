@@ -206,6 +206,34 @@ def test_exception_records_error_state(tmp_path, dirs):
     assert (state / "log.txt").read_text().count("\n") >= 2
 
 
+def test_resolve_target_honors_rig_default(tmp_path):
+    """A `rig`-default routine with no explicit --target resolves to the rig root
+    (registry.yaml's parents[2]), NOT the caller's cwd."""
+    registry_path = tmp_path / "core" / "routines" / "registry.yaml"
+    registry_path.parent.mkdir(parents=True)
+    registry_path.write_text("version: 1\nroutines: {}\n")
+    routine = _routine("weekly-retro", "draft-pr")
+    object.__setattr__(routine, "target_default", "rig")
+    resolved = cli.resolve_target(routine, None, registry_path)
+    # rig_root = parents[2] of <tmp>/core/routines/registry.yaml == tmp_path
+    assert resolved == tmp_path.resolve()
+
+
+def test_resolve_target_cwd_default_uses_cwd(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    routine = _routine("begin-work", "report-only")  # target_default="cwd"
+    resolved = cli.resolve_target(routine, None, tmp_path / "registry.yaml")
+    assert resolved == tmp_path.resolve()
+
+
+def test_resolve_target_explicit_overrides_default(tmp_path):
+    routine = _routine("weekly-retro", "draft-pr")
+    object.__setattr__(routine, "target_default", "rig")
+    explicit = tmp_path / "somewhere"
+    resolved = cli.resolve_target(routine, str(explicit), tmp_path / "registry.yaml")
+    assert resolved == explicit.resolve()  # explicit --target wins over rig default
+
+
 def test_main_rejects_disabled_routine(tmp_path):
     """main() refuses a disabled routine (exit 3) without executing it."""
     import sys

@@ -21,8 +21,11 @@ registry and run-state, then act on the sub-command.
   and enabled, read from the registry.
 - `status`: per routine, show the last run date + status + artifact from
   `state.json` (or "never run" if absent).
-- `run <name>`: invoke `core/routines/run-routine.sh <name> --target "$PWD"`.
-  Add `--dry-run` if the user asks to preview without acting.
+- `run <name>`: invoke `core/routines/run-routine.sh <name>`. Do NOT pass
+  `--target` — the runner resolves it from the routine's `target_default` (`rig`
+  routines run against the rig repo, `cwd` routines against the current dir).
+  Pass `--target <path>` only to deliberately override that. Add `--dry-run` to
+  preview without acting.
 - `enable <name>` / `disable <name>`: run
   `systemctl --user enable --now cc-routine-<name>.timer` (or `disable --now`)
   and report the new timer state. Only routines with a `scheduled` trigger have a
