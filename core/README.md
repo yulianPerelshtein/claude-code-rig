@@ -22,7 +22,9 @@ always-loaded knowledge files so each stays single-purpose and auditable.
   `disable-model-invocation` skills) plus the routine bodies.
 - `agents/` — subagents (`code-reviewer`, `refactor`, `test-writer`,
   `pr-writer`, eval helpers).
-- `styles/` — output styles (default / learning / production).
+- `styles/` — output styles. Just `production` (a maximum-terse mode switch);
+  baseline tone lives always-on in `reasoning-preferences.md`, and interactive
+  teaching is the `learning-mode` skill.
 - `hooks/` — event hooks wired by the native `hooks.json` (PreToolUse
   guardrail, SessionStart/SessionEnd, the consolidation loop, …) plus shared
   `utils/`.
