@@ -79,6 +79,7 @@ exports/
 
 # Specialized KB lives in the private ccrig-private overlay, never in this public repo.
 domains/bim-ifc-usd-geometry/
+profiles/bim-geometry-usd.yaml
 learnings/private-*.md
 
 # The project-journal skill ships a topic file literally named revise-later.md.

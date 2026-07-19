@@ -9,9 +9,11 @@
 A batteries-included Claude Code setup, packaged as a plugin (with a bespoke
 installer for locked-down machines). It adds:
 
-- a **safety guardrail** that blocks destructive commands (`rm -rf`, force-push,
-  `curl | sh`, credential reads, …) plus an advisory prompt-injection scanner on
-  fetched content;
+- a **safety guardrail** that catches destructive commands (`rm -rf`, force-push,
+  `curl | sh`, credential reads, …) before they run, plus an advisory
+  prompt-injection scanner on fetched content. It is a regex blocklist — a
+  backstop against *accidental* destruction, not a security boundary against
+  adversarial input (see [Safety](#safety));
 - a **skills-first `core/`** — slash-command skills (`/commit`, `/review-pr`,
   `/walkthrough`, `/wrap-up`, `/health`, `/save-state`, …), agents
   (`code-reviewer`, `refactor`, `test-writer`, `pr-writer`, eval helpers), and
@@ -56,8 +58,8 @@ option): clone, then run `install/bootstrap-wsl.sh`, or
 `install/install-profile.sh <profile> [--dry-run]`. It supports dry-run, backup,
 rollback, and uninstall; the source→target file map lives in `manifests/`.
 
-Profiles: `minimal-core`, `personal-full`, `backend`, `bim-geometry-usd`,
-`cloud-aws`, `ai-assisted-coding`, `claude-dashboard`, `enhanced-tier2`,
+Profiles: `minimal-core`, `personal-full`, `backend`, `cloud-aws`,
+`ai-assisted-coding`, `claude-dashboard`, `enhanced-tier2`,
 `future-work-laptop`.
 
 ## Statusline
@@ -77,10 +79,20 @@ relative to itself.)
 
 ## Safety
 
-The PreToolUse guardrail (`core/hooks/`) blocks destructive commands from a
-shared blocklist; routines never push to a default branch and never merge (draft
-PRs only, gated by the runner). Everything runs locally and zero-egress by
-default.
+The PreToolUse guardrail (`core/hooks/`) matches Bash commands against a shared
+blocklist (`core/hooks/blocked-commands.json`) and denies on a hit; routines
+never push to a default branch and never merge (draft PRs only, gated by the
+runner). Everything runs locally and zero-egress by default.
+
+**Scope, honestly:** the blocklist is plain regex over the command string. It
+reliably stops the accidental `rm -rf` / force-push / `curl | sh` class of
+mistake, which is what it exists for. It does **not** withstand deliberate
+evasion — indirection (`F="-rf"; rm $F …`), an equivalent tool
+(`find … -delete`), an interpreter (`python -c "shutil.rmtree(…)"`), or any
+encoding of the command all pass straight through, and the blocklist itself is
+public. Treat it as a seatbelt, not a sandbox: it shrinks the blast radius of an
+agent's honest mistakes, and it is not a control to rely on against untrusted
+input.
 
 ## Versioning
 
