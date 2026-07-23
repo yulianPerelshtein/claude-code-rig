@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.9]
+
+### Added
+
+- Quick-note capture (`qn`): `tools/cli-helpers/qn.sh` plus a slash-only `qn`
+  skill. Appends a timestamped bullet under `## Log` in today's Obsidian daily
+  note, scaffolding that note from the vault's own `_templates/daily.md` when it
+  is missing — so a day first touched by `qn` matches what Obsidian would create
+  instead of a stunted `## Log`-only file. The vault resolves from
+  `$RIG_VAULT_DIR` (default `~/notes`), so nothing is pinned to one machine's
+  layout. The script is the single source of truth: an interactive shell
+  function and a personal `/qn` command call it rather than each carrying its
+  own copy of the logic.
+
 ## [0.0.8]
 
 ### Fixed
