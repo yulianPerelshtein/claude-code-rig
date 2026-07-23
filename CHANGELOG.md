@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8]
+
+### Fixed
+
+- The statusline context bar rendered its fill inverted. The bar glyphs
+  (`█` filled / `░` empty) were drawn under reverse video (`\033[7;3Xm`), which
+  swaps foreground and background: the filled `█` run came out in the terminal's
+  background colour (a grey sliver at the left edge) while the *empty* `░` track
+  showed the status colour. Dropped the reverse-video attribute and now colour
+  the two runs separately — filled in green/yellow/red by threshold, empty track
+  in dim grey — so it reads as an ordinary progress bar.
+
 ## [0.0.7]
 
 ### Fixed

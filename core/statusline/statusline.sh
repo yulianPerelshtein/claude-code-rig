@@ -16,10 +16,15 @@ IFS='|' read -r USED BAR IN_TOK OUT_TOK COST SESSION_STR WEEKLY_STR MODEL_NAME A
 USED=${USED:-0}
 
 # ── Colors ────────────────────────────────────────────────────────────────────
-if   [ "${USED}" -ge 80 ] 2>/dev/null; then CTX_C="\033[7;31m"
-elif [ "${USED}" -ge 60 ] 2>/dev/null; then CTX_C="\033[7;33m"
-else                                         CTX_C="\033[7;32m"
+# Foreground colour for the context-usage bar. No reverse video (7): the bar is
+# drawn as a real progress bar — the filled █ run in CTX_C, the empty ░ track in
+# dim grey (see Assemble). Reverse video + block glyphs double-encode the fill,
+# which inverts it (filled renders as terminal-bg grey, empty as the colour).
+if   [ "${USED}" -ge 80 ] 2>/dev/null; then CTX_C="\033[1;31m"
+elif [ "${USED}" -ge 60 ] 2>/dev/null; then CTX_C="\033[1;33m"
+else                                         CTX_C="\033[1;32m"
 fi
+BAR_TRACK="\033[90m"
 
 # Rate limit color: extract leading number from "36% 1h5m"
 _pct_color() {
@@ -44,7 +49,12 @@ SEP="  \033[2m│\033[0m  "
 GIT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-.}" branch --show-current 2>/dev/null)
 
 # ── Assemble ──────────────────────────────────────────────────────────────────
-STATUS="${CTX_C} ${BAR} ${USED}% ${RESET}"
+# Split the 20-char bar into its filled (█) and empty (░) runs so the filled
+# part renders in CTX_C and the empty track in grey. Parameter expansion on the
+# literal glyphs is locale-safe (no character indexing of multibyte chars).
+BAR_FILLED="${BAR%%░*}"
+BAR_EMPTY="${BAR#"$BAR_FILLED"}"
+STATUS=" ${CTX_C}${BAR_FILLED}${BAR_TRACK}${BAR_EMPTY}${RESET} ${CTX_C}${USED}%${RESET}"
 STATUS+="${SEP}${CYAN}↑${IN_TOK} ↓${OUT_TOK}${RESET}"
 STATUS+="${SEP}${BOLD}\$${COST}${RESET}"
 [ -n "$SESSION_STR" ] && STATUS+="${SEP}${SESSION_C}session ${SESSION_STR}${RESET}"
