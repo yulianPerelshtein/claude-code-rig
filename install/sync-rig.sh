@@ -135,7 +135,9 @@ if [[ "${AHEAD}" -eq 0 ]]; then
 elif [[ "${NO_PUSH}" -eq 1 ]]; then
     warn "${AHEAD} commit(s) unpushed; --no-push set, so the plugin will not see them"
 elif confirm "Push ${AHEAD} commit(s) to origin/${BRANCH}?"; then
-    run_or_echo git -C "${RIG_DIR}" push origin "${BRANCH}" && ok "pushed"
+    # --follow-tags, or the release tag the version gate just created stays
+    # local and the remote's tags silently fall behind its commits.
+    run_or_echo git -C "${RIG_DIR}" push --follow-tags origin "${BRANCH}" && ok "pushed"
 else
     warn "not pushed; the plugin update below will not pick up local commits"
 fi
