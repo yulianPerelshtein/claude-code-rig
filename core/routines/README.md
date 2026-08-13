@@ -41,7 +41,25 @@ Single source of truth binding name → body → triggers → target → outcome
 | `weekly-retro` | new skill | scheduled (Sun 18:00) + manual | draft-pr |
 | `monthly-drift` | new skill | scheduled (monthly) + manual | report-only |
 | `self-check` | `self_check.py` (script) | scheduled (Mon 08:30) + manual | report-only |
+| `memory-promotion` | `memory_promotion.py` (script) | scheduled (Sun 17:45) + manual | report-only |
 | `dream-loop` | **existing** `dream_loop.py` (script) | scheduled (nightly) + manual | report-only |
+
+**`memory-promotion`** closes the gap between native auto-memory (per-repository
+by design) and the rig (cross-repo by design). Nothing carried a rule from one to
+the other, so a preference learned in one project stayed invisible in every other
+— a "keep docstrings short" note recorded in one repo did not fire on another
+repo's PR nine days later — while the same commit-message rule got written out
+twice, once per repo, which is duplication the rig exists to absorb.
+
+It reports only what is mechanical: the same slug in two or more live projects,
+and `type: feedback`/`user`, the schema's own word for guidance that does not
+stop at a repo boundary. It deliberately does **not** decide whether the rig
+already carries a rule — that is semantic, and successive word-overlap attempts
+cited a mutation-testing memory to a PR-hygiene doc at 85%, then rated
+`user-working-style` fully covered on the words "working" and "style". Tightening
+the threshold changed which items were wrong, not how many. The judgement belongs
+to `/weekly-retro`, which runs 15 minutes later, can read both files, and
+packages accepted promotions into a draft PR.
 
 **`self-check` vs `monthly-drift`**: drift compares deployed files to the rig and
 reports differences. `self-check` asserts *effects* — that Layer 1 reaches a real

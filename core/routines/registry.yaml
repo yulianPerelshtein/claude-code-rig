@@ -40,6 +40,17 @@ routines:
     target_default: rig
     outcome: report-only
     enabled: true
+  memory-promotion:
+    body: memory-promotion
+    body_type: script              # detection is mechanical; judgement is not
+    script: core/routines/memory_promotion.py
+    artifact_hint: "~/.claude/data/memory-promotion/*.md"
+    description: "Find native auto-memories that are cross-cutting and belong in the rig rather than one repo."
+    # Just before weekly-retro, which reads the report and packages accepted items.
+    triggers: [{type: manual}, {type: scheduled, on_calendar: "Sun 17:45"}]
+    target_default: rig
+    outcome: report-only
+    enabled: true
   self-check:
     body: self-check
     body_type: script              # deterministic assertions; no LLM judgement

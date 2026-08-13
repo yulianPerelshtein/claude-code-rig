@@ -80,6 +80,7 @@ def test_shipped_registry_is_valid_and_complete():
         "weekly-retro",
         "monthly-drift",
         "self-check",
+        "memory-promotion",
         "dream-loop",
     }
     # dream-loop runs the shipped script directly (no /dream-loop skill).
