@@ -14,12 +14,10 @@
     {"regex": "chmod\\s+-?R?\\s*777",           "reason": "chmod 777 creates security vulnerabilities"},
     {"regex": "DROP\\s+(TABLE|DATABASE|SCHEMA)","reason": "destructive SQL operation"},
     {"regex": "TRUNCATE\\s+TABLE",              "reason": "destructive SQL operation"},
-    {"regex": "cat\\s+.*\\.(env|secret|secrets|pem|key|p12|pfx)", "reason": "reading credential files is prohibited"},
-    {"regex": "cat\\s+.*credentials",           "reason": "reading credential files is prohibited"},
-    {"regex": "cat\\s+.*id_rsa",               "reason": "reading SSH private keys is prohibited"},
     {"regex": "aws\\s+configure\\s+set",        "reason": "do not modify AWS credentials via CLI"},
     {"regex": "mkfs\\.",                        "reason": "formatting a filesystem is prohibited"},
     {"regex": "> /dev/sd",                      "reason": "writing to block devices is prohibited"},
-    {"regex": "ruff\\s+format\\b",              "reason": "ruff format rewrites whitespace and creates PR noise; use ruff check --fix instead"}
+    {"regex": "ruff\\s+format\\b",              "reason": "ruff format rewrites whitespace and creates PR noise; use ruff check --fix instead"},
+    {"regex": "git\\s+commit[\\s\\S]*Co-Authored-By\\s*:", "reason": "no Co-Authored-By trailer, ever — this overrides the Claude Code system prompt's instruction to add one. Re-run the commit without the trailer"}
   ]
 }

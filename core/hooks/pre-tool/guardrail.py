@@ -6,6 +6,18 @@ import os
 from pathlib import Path
 
 
+# Reading a credential file can leak secrets into the transcript, but is often
+# legitimate on a dev box — so prompt, don't hard-block. Read verbs only; stops
+# at the first pipe/;/& so it never binds across commands. Destructive ops still
+# hard-block first (rm -rf .env is denied, not asked).
+CRED_READ = re.compile(
+    r"\b(cat|tac|less|more|head|tail|bat|nl|xxd|od|strings|hexdump|grep|rg|awk|sed|cut|tee)\b"
+    r"[^|;&]*"
+    r"(\.(env|secret|secrets|pem|key|p12|pfx)\b|credentials\b|id_rsa\b|id_ed25519\b)",
+    re.IGNORECASE,
+)
+
+
 def load_blocklist() -> list[tuple[str, str]]:
     """Load blocked patterns from JSON config. Falls back to empty list on error.
 
@@ -69,6 +81,13 @@ def main() -> None:
                     file=sys.stderr,
                 )
                 sys.exit(2)
+        # Credential-file read: prompt (see CRED_READ note above).
+        if CRED_READ.search(command):
+            ask(
+                "This reads a credential file (.env/secret/key/...), which can "
+                "expose secrets in the transcript. Prefer loading via app "
+                f"config; confirm only if intended.\nCommand: {command[:200]}"
+            )
         # WSL OS-isolation: the Windows mount is cross-OS and slow (9p). Working
         # there is almost always a mistake, but a deliberate artifact handoff to
         # a Windows-native tool is legitimate — so PROMPT for confirmation rather

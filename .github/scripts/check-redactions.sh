@@ -48,12 +48,14 @@ if [ ${#filtered[@]} -eq 0 ]; then
 fi
 
 # The PreToolUse guardrail legitimately contains the Windows-mount path it
-# blocks (/mnt/c/) as an enforced OS-isolation rule, not a content leak. Exempt
-# it from the MARKER scan only; the API-key scan still covers it.
+# blocks (/mnt/c/) as an enforced OS-isolation rule, not a content leak — and so
+# does its test, which must exercise that exact path. Exempt both from the
+# MARKER scan only; the API-key scan still covers them.
 marker_files=()
 for f in "${filtered[@]}"; do
     case "$f" in
-        guardrail.py|*/guardrail.py)  ;;
+        guardrail.py|*/guardrail.py)              ;;
+        test_guardrail.py|*/test_guardrail.py)    ;;
         *) marker_files+=("$f") ;;
     esac
 done
