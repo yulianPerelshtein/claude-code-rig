@@ -15,8 +15,21 @@ ok()   { printf '%s  OK %s  %s\n' "${G}" "${N}" "$1"; }
 warn() { printf '%sWARN %s  %s\n' "${Y}" "${N}" "$1"; }
 fail() { printf '%sFAIL %s  %s\n' "${R}" "${N}" "$1"; FAILED=1; }
 
-# 1. CLAUDE.md
-[[ -s "${CLAUDE_DIR}/CLAUDE.md" ]] && ok "CLAUDE.md present" || fail "CLAUDE.md missing"
+# 1. CLAUDE.md — present AND its imports resolve. Layer 1 is normally a stub
+# that `@`-imports the rig's core, so a bare existence check passes while
+# loading nothing if the rig moved. Only line-leading @imports are checked;
+# inline ones are rare here and would false-positive on e-mail addresses.
+if [[ -s "${CLAUDE_DIR}/CLAUDE.md" ]]; then
+    broken_import=""
+    while IFS= read -r target; do
+        [[ -e "${target/#\~/${HOME}}" ]] || broken_import="${target}"
+    done < <(grep -oE '^@[^[:space:]]+' "${CLAUDE_DIR}/CLAUDE.md" | cut -c2-)
+    [[ -z "${broken_import}" ]] \
+        && ok "CLAUDE.md present (imports resolve)" \
+        || fail "CLAUDE.md imports a missing file: ${broken_import}"
+else
+    fail "CLAUDE.md missing"
+fi
 
 # 2. settings.json parses (if present)
 if [[ -f "${CLAUDE_DIR}/settings.json" ]]; then
@@ -62,11 +75,19 @@ else
     warn "claude CLI not found"
 fi
 
-# 6. dashboard statusline
-if [[ -x "${CLAUDE_DIR}/utils/statusline.sh" ]]; then
-    ok "dashboard statusline present"
+# 6. dashboard statusline — resolve whatever settings.json points at. The old
+# check hardcoded the bespoke install path, so it warned on a working plugin
+# install that runs the statusline straight out of the rig.
+sl_cmd="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("statusLine",{}).get("command",""))' \
+    "${CLAUDE_DIR}/settings.json" 2>/dev/null)"
+if [[ -z "${sl_cmd}" ]]; then
+    warn "no statusLine configured in settings.json"
 else
-    warn "dashboard statusline not installed"
+    sl_script="$(printf '%s' "${sl_cmd}" | grep -oE '[^[:space:]]*statusline[^[:space:]]*\.sh' | head -n1)"
+    sl_script="${sl_script/#\~/${HOME}}"
+    [[ -n "${sl_script}" && -x "${sl_script}" ]] \
+        && ok "dashboard statusline present (${sl_script})" \
+        || warn "statusLine configured but its script is missing or not executable: ${sl_script:-${sl_cmd}}"
 fi
 
 # 7/8. agents + skills frontmatter
@@ -91,13 +112,21 @@ else
     warn "could not list marketplace plugins"
 fi
 
-# 10. cc-extensions clones
-ext_ok=1
-for ext in superpowers wshobson-agents; do
-    [[ -d "${HOME}/cc-extensions/${ext}/.git" ]] || { ext_ok=0; }
-done
-[[ "${ext_ok}" -eq 1 ]] && ok "cc-extensions clones present" \
-    || warn "some ~/cc-extensions clones missing (run install-extensions.sh)"
+# 10. cc-extensions clones. Read the expected set from marketplace.yaml rather
+# than a hardcoded pair, which drifts silently as extensions are added, and name
+# the missing ones so the warning is actionable. Grepped, not YAML-parsed, to
+# keep this script dependency-free (python3 only).
+MARKETPLACE_YAML="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/manifests/marketplace.yaml"
+missing_ext=()
+while IFS= read -r dest; do
+    [[ -d "${dest/#\~/${HOME}}/.git" ]] || missing_ext+=("$(basename "${dest}")")
+done < <(grep -oE '^\s+install_to:\s*~/cc-extensions/\S+' "${MARKETPLACE_YAML}" 2>/dev/null \
+    | awk '{print $2}')
+if [[ ${#missing_ext[@]} -eq 0 ]]; then
+    ok "cc-extensions clones present"
+else
+    warn "cc-extensions not cloned: ${missing_ext[*]} (run install-extensions.sh)"
+fi
 
 echo
 if [[ "${FAILED}" -eq 1 ]]; then
