@@ -9,9 +9,9 @@ INPUT=$(cat)
 
 PARSED=$(echo "$INPUT" \
     | python3 "$HERE/statusline_parse.py" 2>/dev/null \
-    || echo "0|░░░░░░░░░░░░░░░░░░░░|0|0|0.00|||?||")
+    || echo "0|░░░░░░░░░░░░░░░░░░░░|0|0|||?||")
 
-IFS='|' read -r USED BAR IN_TOK OUT_TOK COST SESSION_STR WEEKLY_STR MODEL_NAME AGENT_NAME WT_BRANCH \
+IFS='|' read -r USED BAR IN_TOK OUT_TOK SESSION_STR WEEKLY_STR MODEL_NAME AGENT_NAME WT_BRANCH \
     <<< "$PARSED"
 USED=${USED:-0}
 
@@ -56,7 +56,6 @@ BAR_FILLED="${BAR%%░*}"
 BAR_EMPTY="${BAR#"$BAR_FILLED"}"
 STATUS=" ${CTX_C}${BAR_FILLED}${BAR_TRACK}${BAR_EMPTY}${RESET} ${CTX_C}${USED}%${RESET}"
 STATUS+="${SEP}${CYAN}↑${IN_TOK} ↓${OUT_TOK}${RESET}"
-STATUS+="${SEP}${BOLD}\$${COST}${RESET}"
 [ -n "$SESSION_STR" ] && STATUS+="${SEP}${SESSION_C}session ${SESSION_STR}${RESET}"
 [ -n "$WEEKLY_STR"  ] && STATUS+="${SEP}${WEEKLY_C}weekly ${WEEKLY_STR}${RESET}"
 [ -n "$GIT_BRANCH"  ] && STATUS+="${SEP}${BOLD}${MAG}⎇  ${GIT_BRANCH}${RESET}"

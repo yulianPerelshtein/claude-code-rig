@@ -27,7 +27,7 @@ installer for locked-down machines). It adds:
   `weekly-retro`, `monthly-drift`, `dream-loop`) bound to manual / scheduled
   (systemd user timers) / event triggers, with an enforced outcome policy
   (report-only · draft-PR · local-write-allowlist);
-- a **cost / rate-limit statusline** dashboard.
+- a **rate-limit statusline** dashboard.
 
 ## Layout
 
@@ -64,10 +64,16 @@ Profiles: `minimal-core`, `personal-full`, `backend`, `cloud-aws`,
 
 ## Statusline
 
-A cost / rate-limit statusline (`core/statusline/`) renders context-window
-usage, token counts, session cost, and the 5-hour / 7-day rate-limit windows —
-all from the JSON Claude Code passes on stdin (no API calls, no network). Because
-a plugin can't register a `statusLine`, enable it by adding to your
+A rate-limit statusline (`core/statusline/`) renders context-window usage, token
+counts, and the 5-hour / 7-day rate-limit windows — all from the JSON Claude
+Code passes on stdin (no API calls, no network).
+
+It deliberately shows no dollar figure. `cost.total_cost_usd` is an
+API-equivalent estimate; on a subscription plan it bills nothing and tracks
+nothing you can act on, so the rate-limit percentages are the real budget
+signal.
+
+Because a plugin can't register a `statusLine`, enable it by adding to your
 `~/.claude/settings.json`:
 
 ```json

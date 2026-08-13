@@ -7,9 +7,14 @@ seconds) on the statusline JSON. No OAuth call, no cache, no network, no
 credential file. The fields are absent on Bedrock / Vertex / Foundry — those
 render empty session/weekly segments, which is the correct behaviour there.
 
+No dollar figure is emitted. Claude Code's ``cost.total_cost_usd`` is an
+API-equivalent estimate; on a subscription plan it bills nothing and tracks
+nothing the user can act on. The rate-limit percentages below are the real
+budget signal.
+
 Output (single line, ``|``-delimited, consumed by statusline.sh):
 
-    used%|bar|in_tok|out_tok|cost|session|weekly|model|agent|worktree
+    used%|bar|in_tok|out_tok|session|weekly|model|agent|worktree
 """
 
 import json
@@ -82,13 +87,12 @@ def main() -> None:
     try:
         d = json.load(sys.stdin)
     except Exception:
-        # Full 10-field contract (used|bar|in|out|cost|session|weekly|model|agent|wt).
-        print("0|" + "░" * 20 + "|0|0|0.00|||?||")
+        # Full 9-field contract (used|bar|in|out|session|weekly|model|agent|wt).
+        print("0|" + "░" * 20 + "|0|0|||?||")
         return
 
     cw = d.get("context_window", {})
     cu = cw.get("current_usage") or {}
-    cost = d.get("cost") or {}
     model = d.get("model") or {}
     agent = d.get("agent") or {}
     wt = d.get("worktree") or {}
@@ -98,7 +102,6 @@ def main() -> None:
     out_raw = cu.get("output_tokens", 0)
     cache_r = cu.get("cache_read_input_tokens", 0)
     total_in = inp + cache_r
-    usd = cost.get("total_cost_usd") or 0
     model_str = (model.get("display_name") or "?").lower()
     agent_nm = agent.get("name") or ""
     wt_branch = wt.get("branch") or ""
@@ -123,7 +126,7 @@ def main() -> None:
 
     print(
         f"{used}|{bar}|{fmt_tokens(total_in)}|{fmt_tokens(out_tok)}"
-        f"|{usd:.2f}|{session_str}|{weekly_str}|{model_str}|{agent_nm}|{wt_branch}"
+        f"|{session_str}|{weekly_str}|{model_str}|{agent_nm}|{wt_branch}"
     )
 
 

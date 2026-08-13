@@ -95,5 +95,5 @@ aggregation. In-session, `/cost` shows the current session's spend.
 ## See also
 
 - `playbooks/observability/otel-insights-review.md` — the review cadence.
-- `core/statusline/` — the real-time statusline (rate_limits + cost).
+- `core/statusline/` — the real-time statusline (rate_limits; no cost figure).
 - `core/hooks/stop/cost_tracker.py` — the per-session cost log this complements.

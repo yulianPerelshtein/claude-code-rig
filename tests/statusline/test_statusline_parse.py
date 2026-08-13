@@ -6,6 +6,7 @@ with HOME pointed at a tmp dir so the mid-stream state file never touches the
 real ~/.claude. Pure helpers are imported directly.
 """
 
+import ast
 import importlib.util
 import json
 import subprocess
@@ -15,6 +16,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 PARSER = REPO / "core" / "statusline" / "statusline_parse.py"
+RENDERER = REPO / "core" / "statusline" / "statusline.sh"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 # Import the module for pure-helper unit tests.
@@ -24,7 +26,7 @@ _spec.loader.exec_module(slp)
 
 
 def run(fixture_name: str, tmp_home: Path) -> list[str]:
-    """Pipe a fixture through the parser; return the 10 output fields."""
+    """Pipe a fixture through the parser; return the 9 output fields."""
     payload = (FIXTURES / fixture_name).read_text()
     proc = subprocess.run(
         [sys.executable, str(PARSER)],
@@ -40,25 +42,25 @@ def run(fixture_name: str, tmp_home: Path) -> list[str]:
 
 def test_team_renders_session_and_weekly(tmp_path):
     fields = run("stdin-claude-ai-team.json", tmp_path)
-    assert len(fields) == 10
+    assert len(fields) == 9
     assert fields[0] == "42"  # used_percentage
-    assert fields[5].startswith("36%")  # five_hour session
-    assert fields[6].startswith("15%")  # seven_day weekly
-    assert fields[7] == "sonnet"  # model, lowercased
+    assert fields[4].startswith("36%")  # five_hour session
+    assert fields[5].startswith("15%")  # seven_day weekly
+    assert fields[6] == "sonnet"  # model, lowercased
 
 
 def test_bedrock_renders_empty_rate_limit_segments(tmp_path):
     fields = run("stdin-bedrock-no-rate-limits.json", tmp_path)
-    assert len(fields) == 10
-    assert fields[5] == ""  # no five_hour -> empty session
-    assert fields[6] == ""  # no seven_day -> empty weekly
-    assert fields[9] == "feature/x"  # worktree branch still rendered
+    assert len(fields) == 9
+    assert fields[4] == ""  # no five_hour -> empty session
+    assert fields[5] == ""  # no seven_day -> empty weekly
+    assert fields[8] == "feature/x"  # worktree branch still rendered
 
 
 def test_mid_stream_only_five_hour(tmp_path):
     fields = run("stdin-mid-stream.json", tmp_path)
-    assert fields[5].startswith("4%")  # five_hour present
-    assert fields[6] == ""  # seven_day absent
+    assert fields[4].startswith("4%")  # five_hour present
+    assert fields[5] == ""  # seven_day absent
 
 
 def test_empty_stdin_falls_back(tmp_path):
@@ -71,8 +73,34 @@ def test_empty_stdin_falls_back(tmp_path):
         check=True,
     )
     assert proc.stdout.startswith("0|")
-    # The fallback must honour the full 10-field contract.
-    assert len(proc.stdout.strip().split("|")) == 10
+    # The fallback must honour the full 9-field contract.
+    assert len(proc.stdout.strip().split("|")) == 9
+
+
+def test_parser_never_reads_the_cost_field():
+    """``cost.total_cost_usd`` is an API-equivalent estimate; a subscription
+    plan bills nothing by it. The docstring may explain that — the code must
+    not read it, so check the AST body with the docstring dropped.
+    """
+    body = ast.parse(PARSER.read_text()).body
+    if isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+        body = body[1:]
+    code = "\n".join(ast.unparse(node) for node in body)
+    assert "total_cost_usd" not in code
+
+
+def test_rendered_statusline_has_no_dollar_segment(tmp_path):
+    """End-to-end through statusline.sh: no fixture may render a $ amount."""
+    for fixture in sorted(FIXTURES.glob("*.json")):
+        rendered = subprocess.run(
+            ["bash", str(RENDERER)],
+            input=fixture.read_text(),
+            capture_output=True,
+            text=True,
+            env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"},
+            check=True,
+        ).stdout
+        assert "$" not in rendered, f"{fixture.name} rendered a $ segment: {rendered!r}"
 
 
 def test_fmt_time_remaining_future_epoch():
