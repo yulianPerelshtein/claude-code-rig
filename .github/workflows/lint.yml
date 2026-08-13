@@ -22,7 +22,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install ruff
-        run: uv tool install ruff
+        # Pinned to the same version .pre-commit-config.yaml uses, so CI and the
+        # local hook agree. Unpinned, this job silently changed verdict whenever
+        # ruff shipped new default rules — green in July, 159 errors in August
+        # on unchanged code.
+        run: uv tool install ruff==0.7.4
       - name: Run ruff
         run: |
           # Skip if no Python files exist yet.
