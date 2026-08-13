@@ -25,6 +25,18 @@ Layer 7: ~/.claude/learnings.md + native MEMORY.md  ← cross-project operationa
 **Placement rule**: a rule belongs at the HIGHEST layer where it is universally
 true. Never duplicate a rule across layers.
 
+**How Layer 1 is deployed**: a plugin ships skills, agents, hooks, and MCP
+servers — it CANNOT ship an always-loaded `CLAUDE.md`. So `bootstrap-wsl.sh`
+writes `~/.claude/CLAUDE.md` as a stub holding one line, `@<rig>/core/CLAUDE.base.md`.
+An import rather than a copy: the rig stays the single source of truth, and the
+`@sibling` imports inside `CLAUDE.base.md` resolve against ITS directory, so
+`safety-rules` / `default-workflows` / `reasoning-preferences` come with it
+(max import depth is four hops; this chain is two). Without that stub nothing
+in `core/` reaches a session — a silent failure, since every file still looks
+correctly wired. `install/validate.sh` checks both the stub and that its import
+target resolves; `/context` lists what actually loaded, and the
+`InstructionsLoaded` hook logs it per session.
+
 ## Loading triggers (when content enters context)
 
 Keep the always-loaded core minimal; let everything else load only when

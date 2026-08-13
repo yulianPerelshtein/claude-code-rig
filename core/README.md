@@ -1,8 +1,11 @@
 # core/ — always-loaded minimal core
 
 Everything here ships in **all** profiles and carries no company, project, or
-vendor references. `CLAUDE.base.md` is Layer 1 (always loaded) and imports the
-always-loaded knowledge files so each stays single-purpose and auditable.
+vendor references. `CLAUDE.base.md` is Layer 1 and imports the always-loaded
+knowledge files so each stays single-purpose and auditable. "Always loaded"
+depends on `~/.claude/CLAUDE.md` importing it — see
+`context-architecture.md` §"How Layer 1 is deployed"; the plugin alone does not
+put this file into a session.
 `context-architecture.md` is on-demand reference (not imported) — pull it with
 `@core/context-architecture.md` when editing the rig's structure.
 
