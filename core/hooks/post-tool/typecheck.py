@@ -29,7 +29,7 @@ def main() -> None:
     # Does NOT reformat whitespace or collapse multi-line expressions —
     # that is ruff format's job, which we never run automatically.
     subprocess.run(
-        ['uv', 'run', 'ruff', 'check', '--fix', path],
+        ['uv', 'run', '--no-project', 'ruff', 'check', '--fix', path],
         capture_output=True,
         text=True,
         timeout=30,
@@ -40,7 +40,7 @@ def main() -> None:
     # Only return code 1 means "type errors found"; 2 means a tooling/daemon
     # problem, which we skip silently rather than emit a false TYPE ERRORS warning.
     result = subprocess.run(
-        ['uv', 'run', 'dmypy', 'run', '--', path,
+        ['uv', 'run', '--no-project', 'dmypy', 'run', '--', path,
          '--ignore-missing-imports', '--no-error-summary'],
         capture_output=True,
         text=True,
