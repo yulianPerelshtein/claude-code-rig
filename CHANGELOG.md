@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10]
+
+### Fixed
+
+- **Layer 1 never loaded.** `core/CLAUDE.base.md` calls itself "the always-loaded
+  Layer-1 core" and `core/context-architecture.md` defines Layer 1 as
+  `~/.claude/CLAUDE.md` — but only the bespoke manifest installer ever created
+  that file. The marketplace path could not: a plugin ships skills, agents,
+  hooks and MCP/LSP servers, never an always-loaded `CLAUDE.md`. So on a plugin
+  install none of the core prose rules reached any session, silently, while
+  every file still looked correctly wired. `bootstrap-wsl.sh` now writes
+  `~/.claude/CLAUDE.md` as a one-line `@`-import of the rig's core — an import
+  rather than a copy, so there is one source of truth and the nested `@sibling`
+  imports still resolve against `CLAUDE.base.md`'s own directory. It is
+  idempotent and never overwrites an existing hand-written `CLAUDE.md`.
+- `install/validate.sh` passed on a `CLAUDE.md` whose import target no longer
+  existed; it now resolves line-leading `@`-imports. Its statusline check
+  hardcoded the bespoke install path (so it warned on a working plugin install)
+  and its `cc-extensions` check hardcoded two of the five extensions — both now
+  read from the actual configuration.
+- Hooks ran as `uv run python …`, which resolves against whatever project
+  environment the session happened to be in; now `uv run --no-project`.
+
+### Added
+
+- `## Authoring code` in Layer 1: comments fit on one line unless the meaning
+  genuinely needs a second, and docstrings state the contract rather than
+  restating the algorithm. The rig previously constrained comment *line length*
+  only, never volume.
+- `domains/python/comments-and-docstrings.md` — the Python mechanics of the
+  above: two-line module docstrings, when a docstring is warranted at all, when
+  NumPy `Parameters`/`Returns` earn their place, clause-boundary line breaks,
+  and the carve-out for spec tables (content, not narration).
+- `tests/hooks/test_guardrail.py` — first direct coverage of the PreToolUse
+  guardrail.
+
+### Changed
+
+- The `Co-Authored-By` rule is now enforced, not just stated. The Claude Code
+  system prompt instructs adding the trailer and the rig forbids it; a CLAUDE.md
+  is context rather than configuration, so prose alone could not settle it.
+  Layer 1 now says explicitly that the rule overrides the system prompt, and the
+  guardrail blocklist hard-blocks any `git commit` carrying the trailer.
+- `core/authored-content-rules.md` said a commit body "is for the non-obvious
+  *why* only", contradicting Layer 1 and the `commit` skill, which both require
+  a one-line subject with no body. Aligned on no body.
+- Credential-file reads prompt for confirmation instead of being hard-blocked —
+  legitimate on a dev box, and the `cat`-only blocklist patterns missed every
+  other read verb anyway.
+- The statusline no longer renders a `$` amount. `cost.total_cost_usd` is an
+  API-equivalent estimate that bills nothing on a subscription plan; the
+  rate-limit percentages are the real budget signal. The parser's output
+  contract drops from ten fields to nine.
+
 ## [0.0.9]
 
 ### Added
