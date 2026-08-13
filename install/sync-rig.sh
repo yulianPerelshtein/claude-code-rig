@@ -78,7 +78,55 @@ BRANCH="$(git -C "${RIG_DIR}" branch --show-current)"
 HEAD_SHA="$(git -C "${RIG_DIR}" rev-parse --short HEAD)"
 ok "clean, on '${BRANCH}' at ${HEAD_SHA}"
 
-# --- 2. publish ----------------------------------------------------------------
+# --- 2. version gate ------------------------------------------------------------
+# `claude plugin update` compares VERSION STRINGS, not commits: with plugin.json
+# unchanged it answers "already at the latest version" and leaves the plugin on
+# its old commit, however far the repo has moved. So any commit touching
+# plugin-delivered content is undeliverable until the version bumps — which is
+# how seven commits sat published-but-not-installed while everything looked fine.
+step "Version"
+PLUGIN_JSON="${RIG_DIR}/.claude-plugin/plugin.json"
+CUR_VERSION="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['version'])" "${PLUGIN_JSON}")"
+LAST_BUMP="$(git -C "${RIG_DIR}" log -1 --format=%H -- "${PLUGIN_JSON}")"
+# Paths the plugin actually ships (see .claude-plugin/plugin.json).
+DELIVERED=(core domains skills .mcp.json .lsp.json .claude-plugin)
+UNDELIVERED="$(git -C "${RIG_DIR}" log --oneline "${LAST_BUMP}..HEAD" -- "${DELIVERED[@]}" 2>/dev/null)"
+
+if [[ -z "${UNDELIVERED}" ]]; then
+    ok "v${CUR_VERSION} covers everything shipped"
+else
+    COUNT="$(printf '%s\n' "${UNDELIVERED}" | wc -l)"
+    warn "${COUNT} commit(s) change shipped content since v${CUR_VERSION} was set:"
+    printf '%s\n' "${UNDELIVERED}" | sed 's/^/       /'
+    NEXT="$(python3 - "${CUR_VERSION}" <<'PY'
+import sys
+major, minor, patch = (sys.argv[1].lstrip("v").split(".") + ["0", "0"])[:3]
+print(f"{major}.{minor}.{int(patch) + 1}")
+PY
+)"
+    if confirm "Bump ${CUR_VERSION} -> ${NEXT} so the plugin can actually receive them?"; then
+        if [[ "${DRY_RUN}" -eq 1 ]]; then
+            echo "    [dry-run] bump to ${NEXT}, commit, tag v${NEXT}"
+        else
+            python3 - "${PLUGIN_JSON}" "${NEXT}" <<'PY'
+import json, pathlib, re, sys
+path, version = pathlib.Path(sys.argv[1]), sys.argv[2]
+# Rewrite the value in place to preserve key order and formatting.
+path.write_text(re.sub(r'("version":\s*")[^"]+(")', rf'\g<1>{version}\g<2>', path.read_text()))
+PY
+            printf 'v%s\n' "${NEXT}" > "${RIG_DIR}/VERSION"
+            git -C "${RIG_DIR}" add "${PLUGIN_JSON}" "${RIG_DIR}/VERSION"
+            git -C "${RIG_DIR}" commit -q -m "chore(release): v${NEXT}"
+            git -C "${RIG_DIR}" tag -a "v${NEXT}" -m "v${NEXT}"
+            HEAD_SHA="$(git -C "${RIG_DIR}" rev-parse --short HEAD)"
+            ok "bumped to v${NEXT} (${HEAD_SHA}); remember a CHANGELOG entry"
+        fi
+    else
+        warn "not bumped — the plugin will stay on v${CUR_VERSION} and ignore those commits"
+    fi
+fi
+
+# --- 3. publish ----------------------------------------------------------------
 step "Publish"
 git -C "${RIG_DIR}" fetch --quiet origin 2>/dev/null || warn "fetch failed (offline?)"
 AHEAD="$(git -C "${RIG_DIR}" rev-list --count "origin/${BRANCH}..HEAD" 2>/dev/null || echo 0)"
@@ -92,7 +140,7 @@ else
     warn "not pushed; the plugin update below will not pick up local commits"
 fi
 
-# --- 3. the marketplace clone must be pristine ---------------------------------
+# --- 4. the marketplace clone must be pristine ---------------------------------
 # It is a real git checkout, so it can be hand-edited; those edits are invisible
 # to the rig and are discarded by the update below. Surface them before that.
 step "Marketplace clone"
@@ -118,14 +166,14 @@ else
     warn "no marketplace clone (plugin may be installed from a local path)"
 fi
 
-# --- 4. refresh both delivery paths --------------------------------------------
+# --- 5. refresh both delivery paths --------------------------------------------
 step "Deliver"
 run_or_echo claude plugin marketplace update claude-code-rig || warn "marketplace update reported problems"
 run_or_echo claude plugin update "${PLUGIN_ID}" || warn "plugin update reported problems"
 # Layer 1 and the statusline need no step: they read the checkout directly.
 ok "Layer 1 + statusline follow the checkout already (no action needed)"
 
-# --- 5. prove it ---------------------------------------------------------------
+# --- 6. prove it ---------------------------------------------------------------
 step "Verify"
 if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "    [dry-run] core/routines/run-routine.sh self-check"
