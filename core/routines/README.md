@@ -115,11 +115,30 @@ routine carries its own `OnCalendar`. Render the templates in
 | `__NAME__` | routine name (a registry key + the service instance) |
 | `__ON_CALENDAR__` | systemd `OnCalendar` expression |
 
-Install rendered units under `~/.config/systemd/user/`, then
-`systemctl --user enable --now cc-routine-<name>.timer`. `Persistent=true`
-catches up runs missed while the machine was off (chosen over cron/atd because
-WSLg timers proved unreliable). Run-state + log live in
-`~/.local/share/cc-rig-routines/`.
+`install/install-routine-timers.sh` does the rendering and installation — it
+reads the registry, so the units cannot drift from the declared schedules:
+
+```bash
+install/install-routine-timers.sh --dry-run          # preview
+install/install-routine-timers.sh                    # install + enable
+install/install-routine-timers.sh --include-mutating # also arm draft-pr routines
+install/install-routine-timers.sh --uninstall
+```
+
+A `draft-pr` routine (weekly-retro) pushes a branch and opens a PR unattended,
+which `safety-rules.md` says needs explicit confirmation — so its unit is written
+but left **disabled** without `--include-mutating`. Same reasoning as the CI
+substrate being tier-2 opt-in. `Persistent=true` catches up runs missed while the
+machine was off (chosen over cron/atd because WSLg timers proved unreliable).
+Run-state + log live in `~/.local/share/cc-rig-routines/`.
+
+> Timers were declared in the registry long before anything installed them: three
+> routines read `enabled: true` with an `OnCalendar` and had never run once,
+> because no unit files existed. Once installed they still failed — `systemd
+> --user` supplies a minimal `PATH` with neither `uv` nor `claude`, so every run
+> exited 127. `run-routine.sh` now repairs its own `PATH`. Both failures were
+> invisible to any check that only looked at files. `self-check` asserts the
+> declared schedules match installed, enabled units.
 
 ## Scheduling (opt-in CI — escalation)
 

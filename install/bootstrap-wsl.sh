@@ -230,6 +230,16 @@ else
     warn "${CLAUDE_DIR}/CLAUDE.md exists but does not import this rig — left untouched. Add this line to load Layer 1:  ${LAYER1_IMPORT}"
 fi
 
+# Routine timers. The registry declares schedules; without rendered units they
+# are inert, which is how three routines sat `enabled: true` and never ran.
+echo
+echo "=== Routine timers ==="
+if confirm "Install systemd user timers for the scheduled routines?"; then
+    "${RIG_DIR}/install/install-routine-timers.sh" || warn "timer install reported problems"
+else
+    warn "skipped; run install/install-routine-timers.sh later"
+fi
+
 echo
 ok "bootstrap complete. Verify with: claude plugin list"
 echo "     Confirm Layer 1 loaded: run /context in a session and look for"

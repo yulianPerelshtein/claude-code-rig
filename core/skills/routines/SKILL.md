@@ -29,7 +29,9 @@ registry and run-state, then act on the sub-command.
 - `enable <name>` / `disable <name>`: run
   `systemctl --user enable --now cc-routine-<name>.timer` (or `disable --now`)
   and report the new timer state. Only routines with a `scheduled` trigger have a
-  timer.
+  timer. If the unit does not exist, the units were never rendered — run
+  `install/install-routine-timers.sh` rather than reporting the routine as
+  broken.
 
 ## Notes
 
