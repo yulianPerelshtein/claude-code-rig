@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.11]
+
+### Added
+
+- **`self-check` routine** (`core/routines/self_check.py`, Mon 08:30,
+  report-only). Asserts the rig's *effects*, not its file layout, because every
+  guarantee that broke this cycle broke while every structural check passed. It
+  boots a real headless session and reads the `InstructionsLoaded` audit to
+  confirm the Layer-1 import chain actually entered context; compares every file
+  in the running plugin against the commit it claims; fires probes at the
+  **installed** guardrail (with false-positive probes, since a blocklist that
+  stops real work gets switched off); confirms declared timers exist and are
+  enabled; and flags unpinned tool installs in CI. A `script` body on purpose —
+  a verifier that depends on the model's judgement is not a verifier. A failing
+  verdict leads the `/begin-work` brief rather than sitting in a report file.
+- **`install/install-routine-timers.sh`** renders and installs the systemd units
+  from the registry. Three routines had declared `enabled: true` with an
+  `OnCalendar` and never run once, because nothing had ever rendered the
+  templates. `draft-pr` routines are installed but left disabled without
+  `--include-mutating`: arming one schedules an unattended push and PR, which
+  `safety-rules.md` says needs explicit confirmation.
+- **`install/sync-rig.sh`**, the one blessed propagation pass: refuses on a dirty
+  tree, bumps the version when needed, publishes, resets a hand-edited
+  marketplace clone (after backing the edits up), refreshes the plugin, then
+  proves the result with `self-check`.
+- `core/hooks/guardrail-probes.json` and first direct test coverage of the
+  PreToolUse guardrail.
+
+### Fixed
+
+- **Timer-fired routines exited 127, silently, every night.** `systemd --user`
+  supplies a minimal `PATH` containing neither `uv` nor `claude` (both in
+  `~/.local/bin`), so a routine that ran perfectly in a login shell died under
+  its own timer. `run-routine.sh` now repairs its own `PATH` — in the entrypoint
+  rather than the unit file, so the cron and CI substrates inherit the fix.
+- **CI lint changed verdict on unchanged code.** `uv tool install ruff` was
+  unpinned: green in July, 159 errors in August against the same commit, after
+  ruff shipped new default rules. Pinned to the version `.pre-commit-config.yaml`
+  already used; `yamllint` pinned alongside it, and `self-check` now fails on any
+  unpinned install so this cannot recur quietly.
+- `core/authored-content-rules.md` contradicted Layer 1 on commit bodies.
+
+### Changed
+
+- `sync-rig.sh` bumps the version because **`claude plugin update` compares
+  version strings, not commits**. With `plugin.json` unchanged it reports
+  "already at the latest version" and leaves the plugin on its old commit however
+  far the repo has moved — seven commits sat published-but-not-installed exactly
+  this way. Any commit touching shipped content is undeliverable until the
+  version moves.
+- `context-architecture.md` documents the two delivery paths and why one path is
+  impossible: a plugin cannot ship an always-loaded `CLAUDE.md` ("A `CLAUDE.md`
+  file at the plugin root is not loaded as project context") and its
+  `settings.json` honours only `agent` and `subagentStatusLine`, not the
+  top-level `statusLine`.
+- `validate.sh` resolves the statusline and `cc-extensions` set from the actual
+  configuration instead of hardcoded paths, and verifies `CLAUDE.md`'s imports
+  resolve rather than only that the file exists.
+
 ## [0.0.10]
 
 ### Fixed
