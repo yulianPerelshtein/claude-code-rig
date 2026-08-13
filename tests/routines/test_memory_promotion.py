@@ -127,7 +127,10 @@ def test_live_project_dirs_skips_projects_whose_path_is_gone(tmp_path, monkeypat
     """A headless probe in a temp dir leaves a memory dir behind; counting those
     would manufacture duplication signal out of scratch directories."""
     projects = tmp_path / "projects"
-    real = Path.home() / ".claude"  # a directory that reliably exists
+    real = tmp_path / "realproj"
+    real.mkdir()
+    # Encoded from a real path under tmp_path, which itself contains hyphens
+    # (`pytest-of-<user>`) — so this also proves the decoder survives them.
     encoded = str(real).replace("/", "-")
     (projects / encoded / "memory").mkdir(parents=True)
     (projects / "-tmp-gone-forever-nowhere" / "memory").mkdir(parents=True)
