@@ -47,19 +47,25 @@ When the same repository is checked out on both WSL and Windows:
   The PreToolUse guardrail hard-blocks the commit either way.
 - Commit messages are a ONE-LINE conventional subject, never a body. Split a
   change that needs explaining into commits that each stand alone.
-- NEVER add authorship or copyright headers to new files (no "Created by …",
-  no `Copyright (c) … <COMPANY>`, no date stamps). Follow the existing project
-  convention or omit entirely.
 
 ## Authoring code
 
-Applies to code you write, in any language — distinct from the reply-length
-rules above. Language-specific mechanics live in the `paths:`-scoped domains.
+Applies to what you write into a repository — source, and the commit and PR text
+that ships with it. Distinct from the reply-length rules above; language-specific
+mechanics live in the `paths:`-scoped domains.
 
 - Comments fit on ONE line. Break that only when the meaning genuinely needs a
   second line; it is a default to apply judgment to, not a hard cap.
 - Docstrings state the contract — what it takes, returns, and assumes. The code
   is already the algorithm; do not restate it in prose.
+- NEVER put names (of people or roles) or dates in anything that ships with the
+  code — source, comments, docstrings, commit messages, PR bodies, migration
+  text. Name a decision by its content ("the classification decision matrix"),
+  never by its origin. Code outlives people and meetings; provenance belongs in
+  git history and personal notes.
+- That covers authorship and copyright headers on new files (no "Created by …",
+  no `Copyright (c) … <COMPANY>`, no date stamps): follow the existing project
+  convention or omit entirely.
 
 ## Worktrees
 
