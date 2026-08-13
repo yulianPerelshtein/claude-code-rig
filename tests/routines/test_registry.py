@@ -69,7 +69,7 @@ def test_rejects_unknown_target(tmp_path):
 
 
 def test_shipped_registry_is_valid_and_complete():
-    """The repo's own core/routines/registry.yaml parses and ships the v1 set."""
+    """The repo's own core/routines/registry.yaml parses and ships the full set."""
     from pathlib import Path
 
     repo_reg = Path(__file__).resolve().parents[2] / "core/routines/registry.yaml"
@@ -79,10 +79,16 @@ def test_shipped_registry_is_valid_and_complete():
         "wrap-up",
         "weekly-retro",
         "monthly-drift",
+        "self-check",
         "dream-loop",
     }
     # dream-loop runs the shipped script directly (no /dream-loop skill).
     assert reg["dream-loop"].body_type == "script"
     assert reg["dream-loop"].script.endswith("dream_loop.py")
-    # the other four are skill-bodied
+    # self-check must stay deterministic: a verifier that depends on a model's
+    # judgement cannot be trusted to report the model's own environment.
+    assert reg["self-check"].body_type == "script"
+    assert reg["self-check"].script.endswith("self_check.py")
+    assert reg["self-check"].outcome == "report-only"
+    # the skill-bodied ones
     assert reg["weekly-retro"].body_type == "skill"

@@ -40,6 +40,16 @@ routines:
     target_default: rig
     outcome: report-only
     enabled: true
+  self-check:
+    body: self-check
+    body_type: script              # deterministic assertions; no LLM judgement
+    script: core/routines/self_check.py
+    artifact_hint: "~/.claude/data/self-check/*.md"
+    description: "Assert the rig's guarantees hold: Layer 1 loads, deployed==committed, guardrail blocks, timers live, CI pinned."
+    triggers: [{type: manual}, {type: scheduled, on_calendar: "Mon 08:30"}]
+    target_default: rig
+    outcome: report-only
+    enabled: true
   dream-loop:
     body: dream-loop
     body_type: script              # reuse the shipped deterministic hook (no /dream-loop skill)

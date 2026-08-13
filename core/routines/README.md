@@ -32,7 +32,7 @@ Single source of truth binding name → body → triggers → target → outcome
 | `outcome` | `report-only` \| `draft-pr` \| `local-write-allowlist` |
 | `enabled` | bool |
 
-### The five v1 routines
+### The routines
 
 | Routine | Body | Trigger(s) | Outcome |
 |---|---|---|---|
@@ -40,7 +40,16 @@ Single source of truth binding name → body → triggers → target → outcome
 | `wrap-up` | **existing** `/wrap-up` | manual + SessionEnd | local-write-allowlist |
 | `weekly-retro` | new skill | scheduled (Sun 18:00) + manual | draft-pr |
 | `monthly-drift` | new skill | scheduled (monthly) + manual | report-only |
+| `self-check` | `self_check.py` (script) | scheduled (Mon 08:30) + manual | report-only |
 | `dream-loop` | **existing** `dream_loop.py` (script) | scheduled (nightly) + manual | report-only |
+
+**`self-check` vs `monthly-drift`**: drift compares deployed files to the rig and
+reports differences. `self-check` asserts *effects* — that Layer 1 reaches a real
+session, that the deployed guardrail actually blocks, that declared timers exist,
+that CI pins its tools. Every guarantee it covers had already failed silently
+while every file was present and correct. It is deliberately a `script` body: a
+verifier that depends on a model's judgement is not a verifier. A failing verdict
+surfaces in the `begin-work` brief, not just in a report file.
 
 `wrap-up` and `dream-loop` reuse already-shipped capabilities; only
 `begin-work` / `weekly-retro` / `monthly-drift` + the `/routines` dispatcher are
