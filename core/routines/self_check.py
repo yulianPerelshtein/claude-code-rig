@@ -323,6 +323,80 @@ def check_timers_match_registry() -> CheckResult:
     return ok(name, f"all {expected} scheduled routines have installed units")
 
 
+def statusline_script(command: str) -> Path | None:
+    """The script a `statusLine.command` runs, e.g. `bash ~/rig/x/statusline.sh`."""
+    for token in command.split():
+        if token.endswith(".sh"):
+            return Path(os.path.expanduser(token))
+    return None
+
+
+def _statusline_checkout() -> Path | None:
+    """The directory the configured statusLine script lives in, if any."""
+    try:
+        settings = json.loads((CLAUDE_DIR / "settings.json").read_text())
+    except Exception:
+        return None
+    script = statusline_script(settings.get("statusLine", {}).get("command", ""))
+    return script.resolve().parent if script else None
+
+
+def check_delivery_paths_agree() -> CheckResult:
+    """The two delivery paths must not drift apart unnoticed.
+
+    Skills, agents and hooks load from the plugin cache; Layer 1 and the
+    statusline load straight off a checkout, because Claude Code cannot deliver
+    either through a plugin — "A CLAUDE.md file at the plugin root is not loaded
+    as project context", and a plugin's settings.json honours only `agent` and
+    `subagentStatusLine`. Two paths is therefore a constraint, not a choice. The
+    failure this catches is them pointing at different commits, so prose rules
+    come from one version of the rig while the hooks enforcing them come from
+    another.
+    """
+    name = "delivery-paths-agree"
+    problems: list[str] = []
+
+    _, sha = plugin_root()
+    head = run(["git", "-C", str(RIG_ROOT), "rev-parse", "HEAD"]).stdout.strip()
+    if sha and head and sha != head:
+        ahead = run(["git", "-C", str(RIG_ROOT), "rev-list", "--count", f"{sha}..HEAD"])
+        n = ahead.stdout.strip() or "?"
+        problems.append(
+            f"plugin is {n} commit(s) behind the checkout "
+            f"({sha[:8]} vs {head[:8]}) — run install/sync-rig.sh"
+        )
+
+    # Layer 1 loads the WORKING TREE, so uncommitted edits ship to every session
+    # while the plugin still serves the last published commit.
+    closure, _ = import_closure(CLAUDE_DIR / "CLAUDE.md")
+    tracked = [p for p in closure if str(p).startswith(str(RIG_ROOT))]
+    if tracked:
+        rel = [str(p.relative_to(RIG_ROOT)) for p in tracked]
+        dirty = run(["git", "-C", str(RIG_ROOT), "status", "--porcelain", "--", *rel])
+        for line in dirty.stdout.splitlines():
+            if line.strip():
+                problems.append(f"Layer 1 serves uncommitted {line[3:].strip()}")
+
+    # The marketplace clone is a real git checkout a person can edit in place;
+    # those edits are invisible to the rig and lost on the next update.
+    market = CLAUDE_DIR / "plugins" / "marketplaces" / "claude-code-rig"
+    if (market / ".git").exists():
+        soiled = run(["git", "-C", str(market), "status", "--porcelain"]).stdout.strip()
+        if soiled:
+            count = len(soiled.splitlines())
+            problems.append(
+                f"marketplace clone hand-edited ({count} file(s)) — edits will be lost"
+            )
+
+    sl = _statusline_checkout()
+    if sl and not str(sl).startswith(str(RIG_ROOT)):
+        problems.append(f"statusline loads from {sl}, not the rig checkout")
+
+    if problems:
+        return bad(name, f"{len(problems)} delivery-path discrepancy(ies)", problems)
+    return ok(name, "plugin, Layer 1 and statusline all match the checkout")
+
+
 def check_ci_tools_pinned() -> CheckResult:
     """An unpinned linter in CI changes verdict on unchanged code.
 
@@ -346,6 +420,7 @@ def check_ci_tools_pinned() -> CheckResult:
 CHECKS = (
     check_layer1_loads,
     check_deployed_matches_committed,
+    check_delivery_paths_agree,
     check_guardrail_blocks,
     check_timers_match_registry,
     check_ci_tools_pinned,

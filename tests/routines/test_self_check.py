@@ -122,6 +122,30 @@ def test_probe_covers_fields_match_real_patterns():
     assert stale == set(), f"`covers` values matching no pattern: {stale}"
 
 
+# ── delivery paths ────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "command,expected",
+    [
+        ("bash ~/rig/core/statusline/statusline.sh", "statusline.sh"),
+        ("/usr/bin/bash /opt/rig/sl.sh --flag", "sl.sh"),
+        ("python3 /opt/rig/sl.py", None),
+        ("", None),
+    ],
+)
+def test_statusline_script_extraction(command, expected):
+    """Which checkout the statusline loads from decides whether it can drift
+    from Layer 1; that answer starts with parsing the configured command."""
+    found = sc.statusline_script(command)
+    assert (found.name if found else None) == expected
+
+
+def test_statusline_script_expands_home():
+    found = sc.statusline_script("bash ~/rig/sl.sh")
+    assert found is not None and not str(found).startswith("~")
+
+
 # ── report rendering ──────────────────────────────────────────────────────────
 
 
