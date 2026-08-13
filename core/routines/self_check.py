@@ -58,6 +58,9 @@ RUNTIME_DIRS = {
     ".git", "__pycache__", ".ruff_cache", ".pytest_cache", ".venv", ".in_use",
 }
 RUNTIME_FILES = {".gcs-sha", ".DS_Store"}
+# Paths the plugin actually ships (see .claude-plugin/plugin.json). Kept in step
+# with install/sync-rig.sh, which gates version bumps on the same set.
+DELIVERED = ("core", "domains", "skills", ".mcp.json", ".lsp.json", ".claude-plugin")
 
 
 @dataclass
@@ -359,12 +362,18 @@ def check_delivery_paths_agree() -> CheckResult:
     _, sha = plugin_root()
     head = run(["git", "-C", str(RIG_ROOT), "rev-parse", "HEAD"]).stdout.strip()
     if sha and head and sha != head:
-        ahead = run(["git", "-C", str(RIG_ROOT), "rev-list", "--count", f"{sha}..HEAD"])
-        n = ahead.stdout.strip() or "?"
-        problems.append(
-            f"plugin is {n} commit(s) behind the checkout "
-            f"({sha[:8]} vs {head[:8]}) — run install/sync-rig.sh"
-        )
+        # Only commits touching SHIPPED paths matter. A tests-only commit leaves
+        # the plugin byte-identical, and reporting that as skew would train the
+        # reader to ignore this check — the same way a blocklist that stops real
+        # work gets switched off.
+        argv = ["git", "-C", str(RIG_ROOT), "rev-list", "--count", f"{sha}..HEAD"]
+        ahead = run([*argv, "--", *DELIVERED])
+        n = int(ahead.stdout.strip() or 0)
+        if n:
+            problems.append(
+                f"plugin is {n} shipped-content commit(s) behind the checkout "
+                f"({sha[:8]} vs {head[:8]}) — run install/sync-rig.sh"
+            )
 
     # Layer 1 loads the WORKING TREE, so uncommitted edits ship to every session
     # while the plugin still serves the last published commit.
