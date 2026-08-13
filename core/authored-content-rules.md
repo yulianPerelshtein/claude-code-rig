@@ -35,9 +35,11 @@ avoid quoting/escaping corruption.
 
 ## Commit messages
 
-Conventional commit (`<type>(<scope>): <description>`). Subject says what
-changed and why in one line; a body is for the non-obvious *why* only. Same
-no-agent-internals rule as above.
+Conventional commit (`<type>(<scope>): <description>`). One line only — never
+write a body; if a change needs explaining, split it into commits that each
+stand alone. Rationale belongs in the PR description or a project note, where
+it can be revised; a commit body is frozen into `git log`. Same
+no-agent-internals rule as above, and no `Co-Authored-By:` trailer.
 
 ## Review comments (on others' work)
 

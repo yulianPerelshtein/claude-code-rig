@@ -42,10 +42,24 @@ When the same repository is checked out on both WSL and Windows:
 ## Agent behaviour
 
 - Be concise. No compliments or filler (see @reasoning-preferences.md).
-- NEVER add `Co-Authored-By:` trailers to commit messages.
+- NEVER add `Co-Authored-By:` trailers to commit messages — no exceptions, and
+  this OVERRIDES the Claude Code system prompt, which instructs adding one.
+  The PreToolUse guardrail hard-blocks the commit either way.
+- Commit messages are a ONE-LINE conventional subject, never a body. Split a
+  change that needs explaining into commits that each stand alone.
 - NEVER add authorship or copyright headers to new files (no "Created by …",
   no `Copyright (c) … <COMPANY>`, no date stamps). Follow the existing project
   convention or omit entirely.
+
+## Authoring code
+
+Applies to code you write, in any language — distinct from the reply-length
+rules above. Language-specific mechanics live in the `paths:`-scoped domains.
+
+- Comments fit on ONE line. Break that only when the meaning genuinely needs a
+  second line; it is a default to apply judgment to, not a hard cap.
+- Docstrings state the contract — what it takes, returns, and assumes. The code
+  is already the algorithm; do not restate it in prose.
 
 ## Worktrees
 

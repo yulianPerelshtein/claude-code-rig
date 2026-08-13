@@ -1,10 +1,11 @@
 ---
 name: python
 description: >-
-  Generic Python engineering practices: ruff lint-vs-format discipline,
-  optional/platform imports, float tolerances, revealing-over-defensive code,
-  import-time side effects, and tracemalloc memory profiling. Use when editing
-  Python source or tests.
+  Generic Python engineering practices: comment and docstring volume, ruff
+  lint-vs-format discipline, optional/platform imports, float tolerances,
+  revealing-over-defensive code, import-time side effects, and tracemalloc
+  memory profiling. Use when editing Python source or tests, and before
+  writing a docstring or comment block.
 paths:
   - "**/*.py"
   - "**/pyproject.toml"

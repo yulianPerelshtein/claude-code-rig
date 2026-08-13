@@ -7,6 +7,7 @@ context. No project/company/vendor specifics.
 | File | Lesson |
 |---|---|
 | `ruff-and-formatting.md` | lint vs format; magic trailing comma; on-save-formatter hazards; line length. |
+| `comments-and-docstrings.md` | how *much* prose to write; two-line module docstrings; when NumPy sections earn their place. |
 | `optional-dependencies-and-platform-imports.md` | function-scoped imports for OS-only / heavy SDKs; test-patchable module names. |
 | `numerics-and-tolerances.md` | never `==` on floats; named, unit-meaningful tolerances. |
 | `defensive-vs-revealing-code.md` | sign multipliers over `abs()`; let invariant violations surface. |
