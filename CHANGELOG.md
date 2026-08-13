@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.12]
+
+### Added
+
+- **`memory-promotion` routine** (`core/routines/memory_promotion.py`, Sun 17:45,
+  report-only). Native auto-memory is per-repository by design and the rig is
+  cross-repo by design, with nothing carrying a rule between them: a "keep
+  docstrings short" preference recorded in one project did not fire on another
+  project's PR nine days later, while the same commit-message rule had been
+  written out once per repo. The routine reports what is mechanical — a slug
+  recorded in two or more live projects, and `type: feedback`/`user` memories —
+  and `/weekly-retro` now reads that report and packages accepted promotions
+  into a draft PR.
+- `self-check` gained `delivery-paths-agree`: plugin-vs-checkout commit skew,
+  Layer 1 serving uncommitted work, a hand-edited marketplace clone, and a
+  statusline loading from a different checkout.
+
+### Fixed
+
+- `sync-rig.sh` pushed with plain `git push`, so the release tag it had just
+  created stayed local while the remote's commits moved on. Now `--follow-tags`.
+
+### Notes
+
+- `memory-promotion` deliberately does **not** judge whether the rig already
+  carries a rule. Three word-overlap attempts each produced confident nonsense —
+  a mutation-testing memory cited to a PR-hygiene doc at 85%, then
+  `user-working-style` rated fully covered on the words "working" and "style" —
+  and tightening the threshold only moved which items were wrong. Semantic
+  judgement lives in the skill that can read the files; the detector reports
+  only what it can establish.
+- Project-directory decoding is now filesystem-guided. The `/`-to-`-` encoding is
+  ambiguous, and splitting on every hyphen silently dropped any project whose
+  path contains one.
+
 ## [0.0.11]
 
 ### Added
