@@ -25,6 +25,32 @@ Layer 7: ~/.claude/learnings.md + native MEMORY.md  ← cross-project operationa
 **Placement rule**: a rule belongs at the HIGHEST layer where it is universally
 true. Never duplicate a rule across layers.
 
+## The two delivery paths
+
+One source of truth (this repo) reaches a running Claude Code by two routes, and
+the split is a **constraint, not a choice**:
+
+| Route | Carries | Serves |
+|---|---|---|
+| plugin cache (`${CLAUDE_PLUGIN_ROOT}`) | skills, agents, hooks, MCP/LSP servers | the last **published commit** |
+| the checkout, read directly | Layer 1 (`~/.claude/CLAUDE.md` import) + statusline | the **working tree**, instantly |
+
+Neither of the second route's two components can move to the first. Per the
+plugin reference: "A `CLAUDE.md` file at the plugin root is not loaded as project
+context", and a plugin's `settings.json` honours "only the `agent` and
+`subagentStatusLine` keys" — not the top-level `statusLine`.
+
+The hazard is that the routes serve **different commits**: an uncommitted edit to
+`CLAUDE.base.md` reaches every session immediately, while the hooks meant to
+enforce it stay on the last published commit. That is not hypothetical — the
+plugin sat 7 commits behind the checkout while both were "working".
+
+`install/sync-rig.sh` is the one blessed pass that realigns them (refuses on a
+dirty tree, publishes, refreshes the plugin, then proves it with `self-check`).
+`self-check`'s `delivery-paths-agree` reports whenever they are apart, including
+hand-edits to the marketplace clone — a third real git checkout whose local
+edits are invisible to the rig and discarded on the next update.
+
 **How Layer 1 is deployed**: a plugin ships skills, agents, hooks, and MCP
 servers — it CANNOT ship an always-loaded `CLAUDE.md`. So `bootstrap-wsl.sh`
 writes `~/.claude/CLAUDE.md` as a stub holding one line, `@<rig>/core/CLAUDE.base.md`.
