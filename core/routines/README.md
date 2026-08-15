@@ -37,7 +37,6 @@ Single source of truth binding name → body → triggers → target → outcome
 | Routine | Body | Trigger(s) | Outcome |
 |---|---|---|---|
 | `begin-work` | new skill | manual + SessionStart **nudge** | report-only |
-| `wrap-up` | **existing** `/wrap-up` | manual + SessionEnd | local-write-allowlist |
 | `weekly-retro` | new skill | scheduled (Sun 18:00) + manual | draft-pr |
 | `monthly-drift` | new skill | scheduled (monthly) + manual | report-only |
 | `self-check` | `self_check.py` (script) | scheduled (Mon 08:30) + manual | report-only |
@@ -69,11 +68,9 @@ while every file was present and correct. It is deliberately a `script` body: a
 verifier that depends on a model's judgement is not a verifier. A failing verdict
 surfaces in the `begin-work` brief, not just in a report file.
 
-`wrap-up` and `dream-loop` reuse already-shipped capabilities; only
-`begin-work` / `weekly-retro` / `monthly-drift` + the `/routines` dispatcher are
-new. There is intentionally **no `/dream-loop` skill** — the routine schedules
-the deterministic `dream_loop.py`, and `/dream-report` remains the human
-synthesis step.
+`dream-loop` reuses an already-shipped capability. There is intentionally **no
+`/dream-loop` skill** — the routine schedules the deterministic `dream_loop.py`,
+and `/dream-report` remains the human synthesis step.
 
 ## Outcome policies (enforced by the runner)
 

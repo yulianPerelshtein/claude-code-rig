@@ -76,7 +76,6 @@ def test_shipped_registry_is_valid_and_complete():
     reg = load_registry(repo_reg)
     assert set(reg) == {
         "begin-work",
-        "wrap-up",
         "weekly-retro",
         "monthly-drift",
         "self-check",

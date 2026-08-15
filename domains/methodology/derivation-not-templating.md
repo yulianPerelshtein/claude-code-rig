@@ -21,7 +21,7 @@ practices" checklist someone published.
 ## Reusable artifacts (the parts worth keeping)
 
 - **The 6 Rs of a knowledge loop:** Record → Reduce → Reflect → Reweave →
-  Verify → Rethink. The rig already implements this: capture (`/wrap-up`,
+  Verify → Rethink. The rig already implements this: capture (auto memory,
   session summaries) → reduce (dream-loop theme aggregation, learnings
   compaction) → reflect (`/dream-report`) → reweave (route into
   `learnings/distilled.md` / new skills) → verify (verification council,

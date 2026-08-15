@@ -41,7 +41,7 @@ or known-bad session, then act on the routing.
    | Category | What you are looking for |
    |---|---|
    | **Prompt quality** | Vague/under-specified asks; missing acceptance criteria; the correction cluster that followed a weak prompt. |
-   | **Session hygiene** | Scope creep, no checkpoint/`/save-state`, marathon sessions that should have been split, stale context carried forward. |
+   | **Session hygiene** | Scope creep, no checkpoint, marathon sessions that should have been split, stale context carried forward. |
    | **Code-review effectiveness** | Edits landed without review/tests; rejected edits (high edit-reject rate); review caught nothing because none ran. |
    | **Tool mastery** | Failure/retry density: blind retries, wrong tool for the job, Edit-string misses, Bash that timed out. |
    | **Context management** | Cache-busting (low cache ratio), bloated context, cost/turn outliers, re-reading the same files. |

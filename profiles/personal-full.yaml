@@ -22,7 +22,7 @@ modules:
 # render + `systemctl --user enable --now` the scheduled timers — the installer's
 # file resolver only consumes `modules`/`extends`, so it ignores this key.
 routines:
-  enabled: [begin-work, wrap-up, weekly-retro, monthly-drift, dream-loop]
+  enabled: [begin-work, self-check, weekly-retro, monthly-drift, memory-promotion, dream-loop]
   timers:                # rendered from core/routines/templates/systemd/ + enabled by bootstrap
     - cc-routine-weekly-retro.timer
     - cc-routine-monthly-drift.timer

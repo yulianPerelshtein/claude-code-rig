@@ -15,7 +15,7 @@ installer for locked-down machines). It adds:
   backstop against *accidental* destruction, not a security boundary against
   adversarial input (see [Safety](#safety));
 - a **skills-first `core/`** — slash-command skills (`/commit`, `/review-pr`,
-  `/walkthrough`, `/wrap-up`, `/health`, `/save-state`, …), agents
+  `/walkthrough`, `/health`, `/begin-work`, `/routines`, …), agents
   (`code-reviewer`, `refactor`, `test-writer`, `pr-writer`, eval helpers), and
   output styles;
 - **path-scoped `domains/`** — knowledge that auto-activates by file type
@@ -23,8 +23,9 @@ installer for locked-down machines). It adds:
   context-engineering, observability, memory, methodology, scraping, security);
 - a **continuous-improvement loop** — per-session summaries → deterministic
   consolidation (`dream-loop`) → `/dream-report` → distilled learnings;
-- **routines** — named, repeatable procedures (`begin-work`, `wrap-up`,
-  `weekly-retro`, `monthly-drift`, `dream-loop`) bound to manual / scheduled
+- **routines** — named, repeatable procedures (`begin-work`, `self-check`,
+  `weekly-retro`, `monthly-drift`, `memory-promotion`, `dream-loop`) bound to
+  manual / scheduled
   (systemd user timers) / event triggers, with an enforced outcome policy
   (report-only · draft-PR · local-write-allowlist);
 - a **rate-limit statusline** dashboard.

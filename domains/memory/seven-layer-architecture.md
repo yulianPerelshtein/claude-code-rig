@@ -24,7 +24,7 @@ Apply it concretely:
 - `core/context-architecture.md` already defines Layers 1–7 with precedence —
   keep that precedence *explicit in the text the model reads*, not just implied
   by load order.
-- When `/dream-report` or `/wrap-up` append a learning, phrase it as a directive
+- When `/dream-report` appends a learning, phrase it as a directive
   ("Always …", "Never …"), not a musing — a rule the model must follow, not a
   note it may consider.
 - A retrieved snippet pasted into context should say *why* it's authoritative

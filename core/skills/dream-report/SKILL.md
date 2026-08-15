@@ -24,8 +24,8 @@ Steps:
    or already covered by CLAUDE.md / an existing learning.
 4. Present each as `ACCEPT` / `DISCARD` / `MODIFY` with the proposed rule text.
    Ask the user to confirm before writing anything.
-5. For each ACCEPTed item, append to `~/.claude/learnings.md` using the wrap-up
-   entry format, followed by a provenance line: `# from dream-report <date>`.
+5. For each ACCEPTed item, append to `~/.claude/learnings.md` using the
+   learnings entry format in `core/context-architecture.md`, followed by a provenance line: `# from dream-report <date>`.
 6. Confirm: "Learnings updated: N new entries added from dream-report <date>."
 
 Do not auto-apply — the user reviews every candidate. This skill is the

@@ -14,5 +14,5 @@ OpenTelemetry setup and `playbooks/observability/otel-insights-review.md` for th
 review cadence.
 
 This is the **quantitative** half of the continuous-improvement loop (the
-qualitative half is the dream loop + `/wrap-up`). It is install-deferred: enable
+qualitative half is the dream loop + `/dream-report`). It is install-deferred: enable
 telemetry on the machine you want to measure; the rig ships the config + docs.

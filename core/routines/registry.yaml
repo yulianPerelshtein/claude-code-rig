@@ -19,13 +19,6 @@ routines:
     target_default: cwd
     outcome: report-only
     enabled: true
-  wrap-up:
-    body: wrap-up                  # binds to the EXISTING /wrap-up skill
-    description: "Daily shutdown: commit hygiene + session summary to learnings/MEMORY."
-    triggers: [{type: manual}, {type: event, hook: SessionEnd}]
-    target_default: cwd
-    outcome: local-write-allowlist
-    enabled: true
   weekly-retro:
     body: weekly-retro
     description: "Cluster the week's summaries + candidate learnings; propose distilled.md additions."

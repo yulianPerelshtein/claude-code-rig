@@ -94,8 +94,8 @@ claude plugin list       # claude-code-rig@claude-code-rig should be enabled
 Open a Claude Code session in any project and confirm:
 
 - [ ] `claude plugin list` shows `claude-code-rig` **enabled**
-- [ ] Slash skills resolve: `/commit`, `/health`, `/review-pr`, `/save-state`,
-  `/walkthrough`, `/wrap-up`
+- [ ] Slash skills resolve: `/commit`, `/health`, `/review-pr`, `/routines`,
+  `/walkthrough`, `/dream-report`
 - [ ] The guardrail blocks a destructive command (e.g. ask it to run
   `rm -rf /tmp/x` — the `PreToolUse` hook denies it)
 - [ ] `/agents` lists `code-reviewer`, `pr-writer`, `refactor`, `test-writer`

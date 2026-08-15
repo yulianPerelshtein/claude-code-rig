@@ -11,8 +11,10 @@
 3. **Make the change.**
 4. **Verify** with the project's own commands (build / tests / lint) before
    claiming completion. Evidence before assertions.
-5. **Wrap up** — when a session surfaces a durable lesson, capture it with
-   `/wrap-up`.
+5. **Wrap up** — when a session surfaces a durable lesson, let native auto
+   memory record it, and review the consolidation with `/dream-report`. Do not
+   hand-write learnings from your own transcript: self-judging a session you
+   just ran is biased and noisy (see `core/skills/analyze-session/SKILL.md`).
 
 ## Tool usage
 

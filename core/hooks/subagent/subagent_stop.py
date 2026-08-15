@@ -21,8 +21,8 @@ def main() -> None:
                         "hookEventName": "SubagentStop",
                         "additionalContext": (
                             "A sub-agent just finished. Review its output before "
-                            "relying on it. If it surfaced a durable lesson, capture "
-                            "it with /wrap-up."
+                            "relying on it; a durable lesson it surfaced belongs in "
+                            "auto memory, not in a hand-written summary."
                         ),
                     }
                 }

@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.13]
+
+### Removed
+
+Audited every shipped component for the "declared but dead" pattern. Three were
+dead rather than merely redundant:
+
+- **`save-state` skill + `pre_compact.sh` hook.** The skill wrote
+  `~/.claude/session-state.md`; the hook backed it up on `PreCompact`. That file
+  was never created, and neither was the `.planning/STATE.md` the hook also
+  watched, so it logged "no task-state file found to back up" on every
+  compaction since it shipped. Native compaction re-injects the project
+  `CLAUDE.md` and auto memory survives — the platform now does what the pair was
+  reaching for. The `PreCompact` event is dropped from `hooks.json` with it.
+- **`wrap-up` skill + its SessionEnd routine.** It appended unreviewed learnings
+  by judging its own transcript, which `analyze-session` explicitly calls
+  "biased, noisy, and token-costly". `/dream-report` already does that job
+  correctly — deterministic consolidation first, human ACCEPT/DISCARD second —
+  and auto memory covers the capture path.
+
+### Fixed
+
+- **`drift-check` could only ever report "no drift".** Its entire mechanism was a
+  grep over `~/workspace/*/.claude/CLAUDE.md`, a path that exists on no machine
+  here, so it matched nothing and passed vacuously. It now discovers the
+  instruction files that actually exist (skipping third-party clones and
+  worktrees, whose duplication is not the user's to fix) and reports the file
+  list before the findings, so an empty scan reads as "nothing compared" rather
+  than "nothing wrong". On this machine that is 0 files before, 6 after.
+
 ## [0.0.12]
 
 ### Added

@@ -10,15 +10,36 @@ project layers, which should live in exactly one place (per
 
 Steps:
 
-1. Run the duplication grep across the user and project instruction files:
+1. **Discover the instruction files that actually exist**, then grep them.
+   Do not assume a fixed repo home — this skill previously hardcoded
+   `~/workspace/*/.claude/CLAUDE.md`, which existed on no machine, so the grep
+   matched nothing and the skill reported "no drift" every time it ran:
 
    ```bash
-   grep -rh "NEVER\|Do NOT\|must be" \
-     ~/.claude/CLAUDE.md ~/workspace/*/.claude/CLAUDE.md 2>/dev/null \
+   # Every instruction file Claude Code would load, wherever repos actually live.
+   # Excluded: third-party clones (cc-extensions) and worktrees, whose files are
+   # someone else's layers or a second copy of one already counted — both would
+   # report duplication that is not yours to fix.
+   mapfile -t LAYERS < <(
+     {
+       printf '%s\n' "${HOME}/.claude/CLAUDE.md"
+       find "${HOME}" -maxdepth 4 \( -name CLAUDE.md -o -name AGENTS.md \) \
+         -not -path '*/.git/*' -not -path '*/node_modules/*' \
+         -not -path '*/.venv/*' -not -path "${HOME}/.claude/plugins/*" \
+         -not -path "${HOME}/cc-extensions/*" -not -path "${HOME}/.claude-worktrees/*" \
+         2>/dev/null
+     } | sort -u
+   )
+   printf 'scanning %d instruction file(s):\n' "${#LAYERS[@]}"
+   printf '  %s\n' "${LAYERS[@]}"
+
+   grep -rh "NEVER\|Do NOT\|must be" "${LAYERS[@]}" 2>/dev/null \
      | sed 's/^[[:space:]]*//' | sort | uniq -d
    ```
 
-   (Adjust the project glob to wherever the user keeps repos.)
+   **Report the file list before the findings.** If it holds only one entry
+   there is nothing to compare, and "no duplication" would be a vacuous pass
+   rather than a real result — say so explicitly instead.
 
 2. For each phrase that appears in 2+ files: it belongs in the **user** layer
    only — recommend removing it from the project layer(s) so there is one source

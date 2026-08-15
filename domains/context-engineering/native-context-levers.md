@@ -94,7 +94,11 @@ token-economy tool against these first.
 - **`/context`** shows live capacity with a per-category breakdown.
   **`PreCompact`/`PostCompact`** hooks fire around a compaction (both support
   `manual`/`auto` matchers; `PreCompact` can block, `PostCompact` cannot).
-  Proactive save-state belongs on `PreCompact`. Hook stdin does NOT expose
+  A `PreCompact` state-backup hook shipped here and was removed: it watched two
+  files that were never produced, so it logged "nothing to back up" on every
+  compaction for months. Native compaction re-injects the project `CLAUDE.md`
+  and auto memory survives, which is what that hook was reaching for. Hook stdin
+  does NOT expose
   remaining context budget — only the statusline payload carries
   `context_window.*` (`used_percentage`, `remaining_percentage`, …). Do not build
   a PostToolUse "N% remaining" monitor.
