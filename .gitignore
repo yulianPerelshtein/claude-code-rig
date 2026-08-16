@@ -90,3 +90,4 @@ learnings/private-*.md
 # tooling artifacts
 .dmypy.json
 uv.lock
+tools/scripts/purged-shas.local.txt

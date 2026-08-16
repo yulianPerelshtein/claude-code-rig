@@ -146,6 +146,45 @@ def test_statusline_script_expands_home():
     assert found is not None and not str(found).startswith("~")
 
 
+# ── purged history ────────────────────────────────────────────────────────────
+
+
+def test_history_purged_skips_when_nothing_is_declared_purged(monkeypatch, tmp_path):
+    """No declared list means no claim to verify — skip, never a silent pass."""
+    monkeypatch.setattr(sc, "PURGED_SHAS", tmp_path / "absent.txt")
+    r = sc.check_history_purged()
+    assert r.status == sc.SKIP
+
+
+def test_history_purged_skips_on_an_empty_list(monkeypatch, tmp_path):
+    f = tmp_path / "purged.txt"
+    f.write_text("# only comments\n\n")
+    monkeypatch.setattr(sc, "PURGED_SHAS", f)
+    assert sc.check_history_purged().status == sc.SKIP
+
+
+def test_history_purged_fails_when_the_remote_still_serves_one(monkeypatch, tmp_path):
+    """The whole point: a 200 means the purge did not take."""
+    f = tmp_path / "purged.txt"
+    f.write_text("deadbee\n")
+    monkeypatch.setattr(sc, "PURGED_SHAS", f)
+    monkeypatch.setattr(sc, "run", lambda *a, **k: type("P", (), {"stdout": "200"})())
+    r = sc.check_history_purged()
+    assert r.status == sc.FAIL and "still served" in r.summary
+
+
+def test_history_purged_skips_when_offline_rather_than_passing(monkeypatch, tmp_path):
+    """Offline must not read as 'purged'.
+
+    Reporting clean when you could not check is the exact failure this exists for.
+    """
+    f = tmp_path / "purged.txt"
+    f.write_text("deadbee\n")
+    monkeypatch.setattr(sc, "PURGED_SHAS", f)
+    monkeypatch.setattr(sc, "run", lambda *a, **k: type("P", (), {"stdout": "000"})())
+    assert sc.check_history_purged().status == sc.SKIP
+
+
 # ── report rendering ──────────────────────────────────────────────────────────
 
 

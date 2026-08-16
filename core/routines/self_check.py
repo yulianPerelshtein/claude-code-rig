@@ -61,6 +61,10 @@ RUNTIME_FILES = {".gcs-sha", ".DS_Store"}
 # Paths the plugin actually ships (see .claude-plugin/plugin.json). Kept in step
 # with install/sync-rig.sh, which gates version bumps on the same set.
 DELIVERED = ("core", "domains", "skills", ".mcp.json", ".lsp.json", ".claude-plugin")
+# SHAs that must no longer be retrievable from the public remote. Kept in a
+# GITIGNORED file: published, the list is a map of exactly what to go and fetch.
+PURGED_SHAS = RIG_ROOT / "tools" / "scripts" / "purged-shas.local.txt"
+PUBLIC_REPO = "yulianPerelshtein/claude-code-rig"
 
 
 @dataclass
@@ -406,6 +410,47 @@ def check_delivery_paths_agree() -> CheckResult:
     return ok(name, "plugin, Layer 1 and statusline all match the checkout")
 
 
+def check_history_purged() -> CheckResult:
+    """Orphaned pre-rewrite commits must not still be served by the remote.
+
+    A `filter-repo` + force-push rewrites refs; it does NOT make GitHub drop the
+    old objects, which stay fetchable by SHA. The June purge was verified "clean
+    across all refs" and was clean locally — while the remote kept serving the
+    old snapshot, including the redaction pattern list itself. Refs are the wrong
+    layer to assert against; this asks the remote.
+    """
+    name = "history-purged"
+    if not PURGED_SHAS.is_file():
+        return skip(name, "no purged-shas.local.txt (nothing declared purged)")
+    shas = [
+        line.strip()
+        for line in PURGED_SHAS.read_text().splitlines()
+        if line.strip() and not line.startswith("#")
+    ]
+    if not shas:
+        return skip(name, "purged-shas.local.txt is empty")
+
+    url = f"https://api.github.com/repos/{PUBLIC_REPO}/commits/"
+    still_served, unreachable = [], 0
+    for sha in shas[:20]:  # bounded: a sample is enough to detect the condition
+        probe = run(["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                     "-H", "Authorization:", "--max-time", "15", url + sha])
+        code = probe.stdout.strip()
+        if code == "200":
+            still_served.append(sha)
+        elif code in ("", "000"):
+            unreachable += 1
+    if unreachable == min(len(shas), 20):
+        return skip(name, "remote unreachable (offline?)")
+    if still_served:
+        return bad(
+            name,
+            f"{len(still_served)} purged commit(s) still served publicly",
+            [f"{s} -> HTTP 200 at {url}{s}" for s in still_served],
+        )
+    return ok(name, f"none of {min(len(shas), 20)} sampled purged commits are served")
+
+
 def check_ci_tools_pinned() -> CheckResult:
     """An unpinned linter in CI changes verdict on unchanged code.
 
@@ -432,6 +477,7 @@ CHECKS = (
     check_delivery_paths_agree,
     check_guardrail_blocks,
     check_timers_match_registry,
+    check_history_purged,
     check_ci_tools_pinned,
 )
 
