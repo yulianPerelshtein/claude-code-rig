@@ -20,13 +20,18 @@ Steps:
 2. For context, Read the **session summaries** it drew from
    (`~/.claude/data/session-summaries/`).
 3. For each candidate theme, propose a **concrete, one-line operational rule**
-   suitable for `~/.claude/learnings.md` — or mark it DISCARD if it is a one-off
+   suitable for `learnings/distilled.md` — or mark it DISCARD if it is a one-off
    or already covered by CLAUDE.md / an existing learning.
 4. Present each as `ACCEPT` / `DISCARD` / `MODIFY` with the proposed rule text.
    Ask the user to confirm before writing anything.
-5. For each ACCEPTed item, append to `~/.claude/learnings.md` using the
-   learnings entry format in `core/context-architecture.md`, followed by a provenance line: `# from dream-report <date>`.
-6. Confirm: "Learnings updated: N new entries added from dream-report <date>."
+5. For each ACCEPTed item, append an `## Accepted for distilled.md` section to
+   **the dream report you just read** (`~/.claude/data/dream-reports/<date>.md`),
+   one entry per item in the format from `core/context-architecture.md`. Do NOT
+   write a separate learnings store: `/weekly-retro` already globs these reports
+   and is the gate that promotes them into `learnings/distilled.md` by draft PR.
+   A machine-local staging file used to sit between the two and silently went
+   three weeks unmentioned, holding seven learnings that never reached the repo.
+6. Confirm: "N entries queued for /weekly-retro in dream-report <date>."
 
 Do not auto-apply — the user reviews every candidate. This skill is the
 human-in-the-loop half of the continuous-improvement loop; see

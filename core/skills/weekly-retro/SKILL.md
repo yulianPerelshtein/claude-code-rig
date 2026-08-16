@@ -15,7 +15,7 @@ accepted candidates, so it does not duplicate that analysis.
 
 1. Read the latest `~/.claude/data/dream-reports/*.md` (the consolidation
    scaffold) and the candidate learnings `/dream-report` has already promoted
-   into `~/.claude/learnings.md`. If no dream report exists yet, run
+   into its `## Accepted for distilled.md` section. If no dream report exists yet, run
    `/dream-report` first (or note that there is nothing to package and stop).
 2. Read the latest `~/.claude/data/memory-promotion/*.md`. That routine detects
    what is mechanical — the same memory slug recorded in two or more projects,

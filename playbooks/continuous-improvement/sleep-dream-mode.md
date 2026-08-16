@@ -46,7 +46,8 @@ never leave the machine, but if you don't want that captured at all, set
 ## Review cadence
 
 Weekly. Run `/dream-report`, triage each candidate theme (ACCEPT / DISCARD /
-MODIFY), and let ACCEPTed entries flow into `~/.claude/learnings.md` with a
+MODIFY), and let ACCEPTed entries flow into the report's `## Accepted for
+distilled.md` section (drained by `/weekly-retro`) with a
 `# from dream-report <date>` provenance line. See
 `playbooks/continuous-improvement/weekly-retrospective.md`.
 

@@ -22,7 +22,10 @@ Distilled, sanitized cross-project operational patterns.
 
 ## Provenance
 
-These entries are a sanitized superset of a personal `~/.claude/learnings.md`.
+These entries are the single curated store. The machine-local
+`~/.claude/learnings.md` that used to stage them was retired 2026-08-16 — it was
+invisible to git and to any other machine, and held seven entries that never
+reached this file.
 All company / product / vendor / project identifiers were removed during
 distillation. Vendor-specific reverse-engineering entries were
 dropped; domain-relevant geometry/USD/IFC lessons are maintained in a

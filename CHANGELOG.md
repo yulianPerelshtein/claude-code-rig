@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.15]
+
+### Changed
+
+- **Learning stores collapsed from three to two.** `~/.claude/learnings.md` was
+  a machine-local staging file between `/dream-report` and `/weekly-retro`. It
+  was invisible to git and to any other machine, and it held **seven entries,
+  untouched since 2026-07-23, that had never reached the repo** — including one
+  recording that `$CLAUDE_PLUGIN_ROOT` is not set in skill bodies, which
+  invalidated a fix being written the same hour. All seven are migrated into
+  `learnings/distilled.md` (now 61 entries) and the file is retired. The model
+  is now: native auto-memory per repo (automatic, machine-local) and
+  `learnings/distilled.md` cross-repo (curated, version-controlled), with
+  `/dream-report` and `memory-promotion` both feeding `/weekly-retro`.
+  `/dream-report` now queues accepted items in an `## Accepted for distilled.md`
+  section of the dream report itself, which `/weekly-retro` already reads — no
+  new store.
+
+### Fixed
+
+- **`hooks-profile` and `load-learnings` looked up paths that do not exist on a
+  plugin install.** `hooks-profile` ran its helper by relative path (only
+  correct when cwd happened to be the rig checkout) and fell back to
+  `~/.claude/hooks/`, which the plugin path never creates — so both routes were
+  dead. `load-learnings` listed the bespoke-installer path *first*, so its
+  primary lookup always missed. Both now resolve the plugin root through a
+  fallback chain, since `$CLAUDE_PLUGIN_ROOT` is exported only to hook commands.
+  Running the repaired profiler immediately found `notification/notify.sh` at
+  p95 54 ms against the skill's own 30 ms target — a regression nothing could
+  see while the lookup was broken.
+- **`health` reported a permanent false warning**: it probed whether
+  `settings.json` references hooks, which on a plugin install it never does.
+  Narrowed to the working environment, deferring rig health to `self-check`.
+- **`monthly-drift` re-derived by hand what `self-check` now asserts.** Narrowed
+  to upstream pin staleness — the part needing the network, which `self-check`
+  cannot do — and told to report absent paths as absent rather than as "no
+  drift".
+
 ## [0.0.13]
 
 ### Removed

@@ -27,7 +27,7 @@ Run it more often only if a week was unusually rough.
    finding; apply the ones you agree with:
    - prompt-quality → `/optimize-prompt` on the driving skill/agent/command;
    - repeated prompt → a **skill candidate** (draft now or note for `/dream-report`);
-   - recurring failure category → a one-line rule into `~/.claude/learnings.md`
+   - recurring failure category → a one-line rule into `learnings/distilled.md`
      via the `/dream-report` path (never appended silently; later curated into
      the repo's `learnings/distilled.md`);
    - cache/cost → `domains/context-engineering/native-context-levers.md` +

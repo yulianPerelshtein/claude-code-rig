@@ -166,7 +166,7 @@ def test_flags_failure_density(tmp_path):
     body = report_text(tmp_path)
     assert telemetry(tmp_path)[-1]["sessions_flagged"] == 1
     assert "tool-failure density" in body
-    assert "~/.claude/learnings.md" in body
+    assert "learnings/distilled.md" in body
 
 
 def test_flags_cost_outlier(tmp_path):

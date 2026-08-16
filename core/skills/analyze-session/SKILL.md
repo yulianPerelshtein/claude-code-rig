@@ -52,7 +52,7 @@ or known-bad session, then act on the routing.
    - a prompt you keep re-issuing (near-duplicate signal) → **skill candidate**:
      draft it (`core/skill-frontmatter-reference.md`) or note it for `/dream-report`;
    - a **recurring failure category** → propose a one-line operational rule for
-     `~/.claude/learnings.md`, applied via the `/dream-report` human-in-the-loop
+     `learnings/distilled.md`, applied via the `/dream-report` human-in-the-loop
      path (do not append silently); it is later curated into the repo's
      `learnings/distilled.md`.
    - cache / cost finding → `domains/context-engineering/native-context-levers.md` +
@@ -74,7 +74,7 @@ or known-bad session, then act on the routing.
 ## Routed actions
 - [ ] /optimize-prompt <file> — <why>
 - [ ] skill candidate: <name> — <the repeated prompt>
-- [ ] ~/.claude/learnings.md (via /dream-report): <one-line rule>
+- [ ] learnings/distilled.md (via /dream-report -> /weekly-retro): <one-line rule>
 ```
 
 See `playbooks/continuous-improvement/session-performance-review.md` for the

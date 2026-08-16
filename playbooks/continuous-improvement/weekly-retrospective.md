@@ -15,9 +15,9 @@ Run once a week (Sunday works well). Budget ~15 minutes.
 2. **Consolidate** — run `/dream-report`. It reads the week's session summaries
    (`~/.claude/data/session-summaries/`) and the latest dream report, and
    proposes candidate learnings. ACCEPT / DISCARD / MODIFY each; ACCEPTed
-   entries land in `~/.claude/learnings.md` with a `# from dream-report <date>`
+   entries land in `learnings/distilled.md` with a `# from dream-report <date>`
    provenance line.
-3. **Prune** — if `wc -l ~/.claude/learnings.md` > 120, strip verbose
+3. **Prune** — if `wc -l learnings/distilled.md` > 200, strip verbose
    `**Context:**`/`**Reason:**` annotations (per `core/context-architecture.md`
    Drift Monitor).
 4. **Review flagged sessions** — read the latest session-perf scan
@@ -29,7 +29,7 @@ Run once a week (Sunday works well). Budget ~15 minutes.
 
 ## Outputs
 
-- Updated `~/.claude/learnings.md` (a few high-signal entries, not a dump).
+- Updated `learnings/distilled.md` (a few high-signal entries, not a dump).
 - A mental note of any skill/playbook to author.
 
 ## See also

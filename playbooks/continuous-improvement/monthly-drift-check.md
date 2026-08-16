@@ -14,7 +14,7 @@ Monthly, ~20 minutes. Heavier than the weekly retrospective.
    layers and reports any phrase appearing in 2+ files. A duplicated rule
    belongs in the **user** layer only — remove it from the project layer(s).
 2. **Walk the Drift Monitor triggers** (`core/context-architecture.md`):
-   - `wc -l ~/.claude/learnings.md` — if > 120, compress (strip
+   - `wc -l learnings/distilled.md` — if > 200, compress (strip
      `**Context:**`/`**Reason:**` preambles).
    - New `settings.json` hook/skill since last check → audit Layer 1 for
      redundancy.

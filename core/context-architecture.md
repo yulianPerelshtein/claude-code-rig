@@ -19,7 +19,7 @@ Layer 3: ~/.claude/skills/*/SKILL.md  ← skills (incl. commands = disable-model
 Layer 4: ~/.claude/agents/*.md        ← specialized subagents, invoked by name
 Layer 5: ~/.claude/styles/*.md        ← output modes, invoked by /style
 Layer 6: project memory files         ← persistent findings, loaded contextually
-Layer 7: ~/.claude/learnings.md + native MEMORY.md  ← cross-project operational patterns
+Layer 7: learnings/distilled.md + native MEMORY.md  ← cross-project operational patterns
 ```
 
 **Placement rule**: a rule belongs at the HIGHEST layer where it is universally
@@ -105,7 +105,7 @@ Branch: `<branch>` — <status>. Plan: `<path>`
 - [project-specific prohibitions only]
 ```
 
-## learnings.md Entry Format
+## distilled.md Entry Format
 
 ```markdown
 ## YYYY-MM-DD CATEGORY-NAME
@@ -122,14 +122,14 @@ monthly `playbooks/continuous-improvement/monthly-drift-check.md` cadence.
 
 **Triggers (check in order):**
 
-1. `wc -l ~/.claude/learnings.md` — if >120: compress (strip verbose preambles).
-2. `grep -rh "NEVER\|Do NOT\|must be" ~/.claude/CLAUDE.md <workspace>/*/.claude/CLAUDE.md 2>/dev/null | sort | uniq -d` — any phrase in 2+ files → remove from project layer.
+1. `wc -l learnings/distilled.md` — if >200: compress (strip verbose preambles).
+2. Run `/drift-check`, which **discovers** the instruction files that exist rather than assuming a repo home — a hardcoded `<workspace>/*/.claude/CLAUDE.md` glob matched nothing here and reported "no drift" every run. Any phrase in 2+ files → remove from the project layer.
 3. New `settings.json` hook or skill added → audit Layer 1 for redundancy.
 4. Before major branch handoff → verify project `CLAUDE.md` is current.
 
 **Re-optimize (10 min):**
 
-- learnings.md >120 lines → strip `**Context:**`/`**Reason:**` annotations.
+- distilled.md >200 lines → strip `**Context:**`/`**Reason:**` annotations.
 - Duplicates found → keep in global, remove from project layer.
 - Project CLAUDE.md >45 lines → push universal rules up to Layer 1.
 

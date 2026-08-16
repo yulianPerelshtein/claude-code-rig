@@ -10,11 +10,23 @@ allowed-tools: Bash, Read, Grep
 Operate on `--target` (default = the rig repo). Surface where the deployed
 config has drifted from the rig and where pinned extensions are stale.
 
-1. Diff deployed `~/.claude/{settings.json,hooks,skills}` against `<target>`
-   (read-only — never modify the deployed originals).
-2. Compare pinned commits/versions in `<target>/manifests/marketplace.yaml`
-   against upstream (`git ls-remote` / release tags); flag stale extensions and
-   available plugin updates.
+**Scope note — read before running.** Whether the rig's own files match what is
+deployed is now asserted mechanically by the `self-check` routine
+(`deployed-matches-committed` compares every file in the running plugin against
+the commit it claims, and `delivery-paths-agree` catches plugin/checkout skew).
+Do not re-derive that here by hand; a model diffing trees is slower and less
+reliable than the hash comparison already running weekly. This routine covers
+what `self-check` cannot: **upstream** staleness, which needs the network.
+
+1. **Stale pins (the core of this routine).** Compare pinned commits/versions in
+   `<target>/manifests/marketplace.yaml` against upstream (`git ls-remote` /
+   release tags); flag stale extensions and available plugin updates.
+2. **Deployed config**, but only the parts that exist on this install:
+   `~/.claude/settings.json` against `<target>/core/settings.template.json`.
+   Report what is present rather than assuming — on a plugin install
+   `~/.claude/hooks/` and most of `~/.claude/skills/` do not exist at all (hooks
+   run from the plugin cache), so diffing them silently compares nothing. If a
+   path is absent, say it is absent; do not report "no drift".
 3. Write a report to `~/.claude/routine-reports/<date>-drift.md` (the runner
    supplies the path under report-only; do not modify the repo).
 4. You MAY propose a **mechanical** pin-bump diff only — never auto-apply a

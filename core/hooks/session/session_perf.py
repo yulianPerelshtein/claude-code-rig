@@ -79,7 +79,7 @@ W_EDIT = 1
 # Routing targets (the point of #30 — close the loop, not just a dashboard).
 R_COST = "review context budget (context-budget-policy / otel-insights-review)"
 R_COST_TURN = "tighten prompts / trim context (/optimize-prompt)"
-R_FAIL = "recurring-failure rule -> ~/.claude/learnings.md via /dream-report"
+R_FAIL = "recurring-failure rule -> learnings/distilled.md via /dream-report"
 R_CORR = "/optimize-prompt on the driving skill/agent; maybe a skill candidate"
 R_DUP = "repeated prompt -> skill candidate (/optimize-prompt, dream-report)"
 R_CACHE = "stabilise early context (otel-insights-review, context-budget-policy)"

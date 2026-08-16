@@ -225,3 +225,36 @@ Before a refactor predicted to deliver a large memory reduction (>2×), profile 
 ## 2026-06-10 TRACEMALLOC-CHECKPOINT-PATTERN
 
 For peak-memory profiling at a specific execution point: `tracemalloc.start(25)` before heavy imports, monkey-patch the existing checkpoint/log fn to dump a snapshot at the target phase (top sites by file:line, top live types, RSS minus traced = C-side estimate). `sys.getsizeof` excludes C-side buffers — pair with allocation sites. See `domains/python/debugging-tracemalloc.md`.
+
+<!-- Migrated 2026-08-16 from the machine-local ~/.claude/learnings.md, which
+     was retired. Every entry below had sat there unpromoted since 2026-07-23:
+     the staging file was invisible to git and to the other machine, so nothing
+     ever drained it. That is the failure the two-tier split removes. -->
+
+## 2026-07-23 COMMIT-ATTRIBUTION-TRAILERS
+
+Before adding a `Co-Authored-By` or any attribution trailer to a commit, check the repo's actual convention: `git log --format=%B -40 | grep -c "^Co-Authored-By:"` plus any authored-content/style doc. A repo with zero such trailers, or one that bans them, overrides the default habit of adding one.
+
+## 2026-07-23 CHANGELOG-DUPLICATE-HEADINGS
+
+Grep a CHANGELOG for the heading you are about to insert — an `[Unreleased]` block often already exists lower in the file, and under markdownlint `MD024: {siblings_only: true}` a second sibling of the same name fails lint. When the project bumps a version per fix commit, add `## [X.Y.Z]` rather than a second `[Unreleased]`.
+
+## 2026-07-23 PLUGIN-ROOT-ENV-SCOPE
+
+`$CLAUDE_PLUGIN_ROOT` is exported only to plugin hook commands, not to Bash tool calls or skill bodies. A skill that runs a bundled script needs a fallback chain: an explicit env var, then the newest `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`. The cache path is nested by marketplace, plugin, and version — not a flat directory.
+
+## 2026-07-23 GUARDRAIL-TEST-PAYLOADS
+
+A PreToolUse regex guardrail matches the entire command string, so a blocked pattern embedded in an echoed test payload or heredoc blocks your own tool call. Test hook logic by writing the payload to a file first or building the pattern indirectly; never inline the literal blocked string.
+
+## 2026-07-23 PLUGIN-MARKETPLACE-DEFAULT-BRANCH
+
+`claude plugin marketplace add <github-url>` clones the repo's default branch, so push or merge local work to that branch first or the install ships stale code. For private repos or uncommitted work, `claude plugin marketplace add <local-path>` is supported and sidesteps auth plus background-refresh failures. To upgrade: `claude plugin marketplace update <name>` then `claude plugin update <plugin>@<marketplace>`; a restart is required to apply.
+
+## 2026-07-23 MCP-NPX-CACHE-ENOENT
+
+An `npx`-launched MCP server reporting "Failed to connect" with `npm error enoent ... _npx/<hash>/package.json` has a corrupted npx cache entry (a `node_modules/` with no `package.json`). Move `~/.npm/_npx/<hash>` aside and re-run to rebuild it — this is not a fault in the server or the plugin bundling it.
+
+## 2026-07-23 CI-CANONICAL-INVOCATION
+
+Read the CI workflow for the canonical lint/test command instead of assuming the standard one; a repo with no `[project]` table needs `uv run --with pytest --with pyyaml pytest`, not `uv run pytest`. Also diff pre-commit hook args against CI — a hook running a linter at default severity while CI runs `--severity=warning` fails on pre-existing findings the moment it is installed.

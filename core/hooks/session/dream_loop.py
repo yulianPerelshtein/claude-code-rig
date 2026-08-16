@@ -137,8 +137,9 @@ def render_report(entries: list[tuple[str, str]], themes: list[tuple[str, int]])
         "## Candidate learnings (review with /dream-report)",
         "",
         "For each recurring theme, decide ACCEPT / DISCARD / MODIFY and, if "
-        "ACCEPTed, append a one-line operational rule to `~/.claude/learnings.md` "
-        "with a `# from dream-report YYYY-MM-DD` provenance line.",
+        "ACCEPTed, append a one-line operational rule under an "
+        "`## Accepted for distilled.md` section IN THIS REPORT. /weekly-retro "
+        "drains it into learnings/distilled.md by draft PR.",
         "",
     ]
     lines += [f"- [ ] {word} (seen in {n} sessions) — " for word, n in themes]
