@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.17]
+
+### Changed
+
+Audited all 13 domains by measuring activation against the real working repos
+(3358 files) rather than reading them. None earned a drop; two were badly
+mis-scoped in opposite directions, and the fix generalises:
+
+- **Domains split into file-shaped and task-shaped**, and the rig had already
+  converged on that without documenting it — the five domains with no `paths:`
+  key are exactly the task-shaped ones. `context-architecture.md` now states the
+  rule, since it previously claimed *all* domains are `paths:`-scoped, which was
+  false for five of thirteen.
+- **`ai-assisted-coding` was matching 1906 files** on `**/*.py` while its content
+  is LLM-SDK integration — irrelevant to nearly every one of them, and it meant
+  three domains fired on every Python file at once. Now task-shaped.
+- **`cloud-aws` matched 0 files**: its globs targeted Terraform and
+  CloudFormation, of which the working repos contain none, while the actual AWS
+  surface here is boto3 (9 files). Now task-shaped, so its SSO-profile and
+  EventBridge content is reachable for the work that exists.
+- For a task-shaped domain the description is the *only* activation route; all
+  seven already carry an explicit "Use when …" trigger.
+
+### Fixed
+
+- **Four topic files nothing pointed at** — `memory/seven-layer-architecture.md`,
+  `observability/ai-engineering-coach.md`, `observability/claude-code-action.md`,
+  `scraping/scrapling.md`. Three were named in prose but never linked to the
+  file, so the knowledge was unreachable by navigation. All now indexed by their
+  `SKILL.md`.
+
+### Notes
+
+- Deliberately did **not** add `README.md` indexes to the eight domains lacking
+  one. Their `SKILL.md` bodies already index their topics inline and no file
+  references a missing README, so the READMEs would be duplication — which
+  `context-architecture.md` forbids — added for symmetry rather than need.
+
 ## [0.0.16]
 
 ### Added

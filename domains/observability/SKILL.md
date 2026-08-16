@@ -13,6 +13,10 @@ activity — quantitatively, over time. Read `claude-code-otel.md` for the nativ
 OpenTelemetry setup and `playbooks/observability/otel-insights-review.md` for the
 review cadence.
 
+Tier-2, opt-in, documented but not installed: `ai-engineering-coach.md` (build
+the VSIX from source) and `claude-code-action.md` (Claude in CI — **bills the
+API**, not subscription-free).
+
 This is the **quantitative** half of the continuous-improvement loop (the
 qualitative half is the dream loop + `/dream-report`). It is install-deferred: enable
 telemetry on the machine you want to measure; the rig ships the config + docs.

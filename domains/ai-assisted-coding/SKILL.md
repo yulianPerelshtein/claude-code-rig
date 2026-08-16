@@ -6,9 +6,6 @@ description: >-
   dotenv load ordering, parallel-agent orchestration, KB-builder agent prompts,
   and AI evaluation frameworks (dimensions, rubrics, tooling, guardrails). Use
   when integrating an LLM SDK, running multi-agent workflows, or planning evals.
-paths:
-  - "**/*.py"
-  - "**/.env.example"
 ---
 
 # ai-assisted-coding

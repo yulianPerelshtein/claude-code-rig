@@ -77,12 +77,28 @@ relevant, and lean on native context management rather than hand-built hooks
 | 3 — Task | A specific `domains/<d>/<topic>.md`, a `playbooks/<area>/<name>.md`, or specific distilled-learning entries | On demand via `@filename` |
 | 4 — Reference | `archive/`, deep references | Never auto-loaded |
 
-**Domain activation is declarative via `paths:`** (skill frontmatter), not a
-custom `session_start.sh` glob loader. Each domain ships a thin `SKILL.md`
-whose `paths:` globs scope it to the relevant file types; Claude Code surfaces
-it only when matching files are in play. Distilled learnings are likewise NOT
-auto-`cat`'d at session start — `session_start.sh` prints only a short cue;
-targeted entries come on demand (`/load-learnings`, or `@learnings/distilled.md`).
+### Domains activate two different ways
+
+Not every domain is file-shaped, and forcing `paths:` onto one that isn't makes
+it fire constantly on files it has nothing to say about.
+
+| Kind | Activation | Domains |
+|---|---|---|
+| **File-shaped** — applies whenever you touch a file type | `paths:` globs | `python`, `testing-tdd`, `software-design`, `devops`, `security`, `project-journal` |
+| **Task-shaped** — applies to a *kind of work*, any file type | description match (no `paths:`) | `ai-assisted-coding`, `cloud-aws`, `context-engineering`, `memory`, `methodology`, `observability`, `scraping` |
+
+For a task-shaped domain the **description is the only activation route**, so it
+must carry an explicit "Use when …" trigger. Measured against the real working
+repos (3358 files), `ai-assisted-coding` was matching **1906** of them on
+`**/*.py` while its content is LLM-SDK integration — irrelevant to nearly all of
+them. `cloud-aws` was the mirror image: **0** matches, because its globs targeted
+Terraform and CloudFormation while the actual AWS surface here is boto3. Both are
+now task-shaped. Re-measure before adding `paths:` to a domain; a glob that
+matches most of the corpus is a smell, and one that matches nothing is a bug.
+
+Distilled learnings are likewise NOT auto-`cat`'d at session start —
+`session_start.sh` prints only a short cue; targeted entries come on demand
+(`/load-learnings`, or `@learnings/distilled.md`).
 
 ## Standard Project CLAUDE.md Template
 

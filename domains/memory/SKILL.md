@@ -12,6 +12,10 @@ description: >-
 The rig's coding-memory and code-navigation layer. Read `serena.md` for the
 serena MCP server (the locked Tier-1 retrieval lever, `SOTA_REFRESH.md §7`).
 
+`seven-layer-architecture.md` is the layering lesson behind all of this — what
+belongs in which store, and why a retrieved snippet must say why it is
+authoritative.
+
 serena complements — does not replace — the **native** memory backbone:
 `MEMORY.md` (machine-local, zero-egress, survives `/compact`) and `CLAUDE.md`
 (see `domains/context-engineering/native-context-levers.md`). gbrain was **dropped** for coding use;

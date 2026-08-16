@@ -5,11 +5,6 @@ description: >-
   rule pattern validation, CloudFormation dependency ordering, and Fargate
   ephemeral-volume asset caching. Use for AWS CLI, boto3, CloudFormation, or
   EventBridge work.
-paths:
-  - "**/*.tf"
-  - "**/template*.y*ml"
-  - "**/cloudformation/**"
-  - "**/*.cfn.*"
 ---
 
 # cloud-aws
