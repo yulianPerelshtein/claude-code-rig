@@ -137,7 +137,21 @@ elif [[ "${NO_PUSH}" -eq 1 ]]; then
 elif confirm "Push ${AHEAD} commit(s) to origin/${BRANCH}?"; then
     # --follow-tags, or the release tag the version gate just created stays
     # local and the remote's tags silently fall behind its commits.
-    run_or_echo git -C "${RIG_DIR}" push --follow-tags origin "${BRANCH}" && ok "pushed"
+    #
+    # A failed push must ABORT. Continuing runs the marketplace update against a
+    # remote that never received the commits, so the plugin reinstalls the old
+    # version and reports "already at the latest" — and the run ends on a
+    # confusing self-check failure whose actual cause (a transient DNS error two
+    # steps earlier) has scrolled away.
+    if run_or_echo git -C "${RIG_DIR}" push --follow-tags origin "${BRANCH}"; then
+        ok "pushed"
+    else
+        fail "push failed — aborting before the delivery step"
+        echo "       origin/${BRANCH} does not have ${HEAD_SHA}, so a plugin update"
+        echo "       now would install the previous version and look successful."
+        echo "       Re-run once the network is back; the version bump is committed."
+        exit 1
+    fi
 else
     warn "not pushed; the plugin update below will not pick up local commits"
 fi
