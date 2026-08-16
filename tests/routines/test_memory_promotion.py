@@ -34,14 +34,14 @@ def test_project_and_reference_memories_are_never_candidates():
         memory("p1", "local-db-quirk", "project"),
         memory("p1", "runbook-url", "reference"),
     ]
-    buckets = mp.classify(mems, {})
+    buckets = mp.classify(mems, {}, decided={})
     assert buckets["duplicated"] == []
     assert buckets["candidates"] == []
 
 
 def test_feedback_and_user_memories_are_candidates():
     mems = [memory("p1", "style-pref", "feedback"), memory("p2", "who-i-am", "user")]
-    buckets = mp.classify(mems, {})
+    buckets = mp.classify(mems, {}, decided={})
     assert {row[0] for row in buckets["candidates"]} == {"style-pref", "who-i-am"}
 
 
@@ -52,15 +52,52 @@ def test_same_slug_in_two_projects_is_the_duplication_signal():
         memory("p1", "commit-message-conventions", "feedback"),
         memory("p2", "commit-message-conventions", "feedback"),
     ]
-    buckets = mp.classify(mems, {})
+    buckets = mp.classify(mems, {}, decided={})
     assert [row[0] for row in buckets["duplicated"]] == ["commit-message-conventions"]
     assert buckets["candidates"] == []
 
 
 def test_a_slug_in_one_project_is_not_duplication():
-    buckets = mp.classify([memory("p1", "only-here", "feedback")], {})
+    buckets = mp.classify([memory("p1", "only-here", "feedback")], {}, decided={})
     assert buckets["duplicated"] == []
     assert [row[0] for row in buckets["candidates"]] == ["only-here"]
+
+
+# ── the decisions ledger ──────────────────────────────────────────────────────
+
+
+def test_a_judged_memory_stops_being_a_candidate():
+    """A weekly report that repeats last week's answers stops being read."""
+    mems = [memory("p1", "already-done", "feedback")]
+    decided = {"already-done": {"verdict": "promoted", "date": "2026-08-16"}}
+    buckets = mp.classify(mems, {}, decided=decided)
+    assert buckets["candidates"] == []
+    assert [row[0] for row in buckets["settled"]] == ["already-done"]
+
+
+def test_a_judged_duplicate_also_settles():
+    mems = [
+        memory("p1", "seen-twice", "feedback"),
+        memory("p2", "seen-twice", "feedback"),
+    ]
+    decided = {"seen-twice": {"verdict": "local", "date": "2026-08-16"}}
+    buckets = mp.classify(mems, {}, decided=decided)
+    assert buckets["duplicated"] == []
+    assert [row[0] for row in buckets["settled"]] == ["seen-twice"]
+
+
+def test_report_says_nothing_new_when_everything_is_judged():
+    mems = [memory("p1", "already-done", "feedback")]
+    decided = {"already-done": {"verdict": "promoted", "date": "2026-08-16"}}
+    out = mp.render(mems, mp.classify(mems, {}, decided=decided))
+    assert "**Nothing new to judge.**" in out
+
+
+def test_classify_does_not_read_the_real_ledger_when_one_is_injected(tmp_path):
+    """Hidden global reads made an earlier test env-dependent; keep it injected."""
+    mems = [memory("p1", "commit-message-conventions", "feedback")]
+    buckets = mp.classify(mems, {}, decided={})
+    assert [row[0] for row in buckets["candidates"]] == ["commit-message-conventions"]
 
 
 # ── the detector must not claim coverage ──────────────────────────────────────
@@ -71,8 +108,8 @@ def test_classification_never_depends_on_the_rig_corpus():
     a memory between buckets, the unsound coverage verdict has crept back in."""
     mems = [memory("p1", "concise-code-comments", "feedback", "short docstrings")]
     corpus = {"core/CLAUDE.base.md": {"concise", "comments", "docstrings", "short"}}
-    without = mp.classify(mems, {})
-    with_rig = mp.classify(mems, corpus)
+    without = mp.classify(mems, {}, decided={})
+    with_rig = mp.classify(mems, corpus, decided={})
     for bucket in ("candidates", "duplicated"):
         assert [r[0] for r in without[bucket]] == [r[0] for r in with_rig[bucket]]
 
@@ -80,7 +117,7 @@ def test_classification_never_depends_on_the_rig_corpus():
 def test_report_states_that_nearest_is_not_a_verdict():
     mems = [memory("p1", "some-pref", "feedback", "a preference")]
     corpus = {"core/CLAUDE.base.md": {"preference", "some"}}
-    out = mp.render(mems, mp.classify(mems, corpus))
+    out = mp.render(mems, mp.classify(mems, corpus, decided={}))
     assert "NOT a claim the rule is already there" in out
     assert "nothing here recommends deleting anything" in out
 

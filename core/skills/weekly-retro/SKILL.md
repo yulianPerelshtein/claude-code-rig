@@ -30,7 +30,16 @@ accepted candidates, so it does not duplicate that analysis.
    - **trim** — the rig already carries it. Propose reducing the memory to the
      residue the rig does not cover; never propose deleting one outright.
    - **leave** — genuinely local to that repo. Most `project`/`reference`
-     memories are, and a `feedback` one can be too.
+     memories are, and a `feedback` one can be too. Employer infrastructure and
+     personal workflow trivia stay local regardless of how cross-cutting they
+     look: the rig is a **public** repo.
+
+   **Record every verdict** in `~/.claude/data/memory-promotion/decisions.json`
+   as `{"<slug>": {"verdict": "promoted|local|covered", "date": "YYYY-MM-DD",
+   "note": "<where it went, or why it stays>"}}`. The routine reads that file and
+   drops judged slugs into an "already judged" section. Skip this and next
+   week's report is identical to this week's, which is how a weekly report stops
+   being read by the third week.
 3. Select 1–5 accepted candidates and render them in the existing
    `learnings/distilled.md` format (`## YYYY-MM-DD CATEGORY-NAME` + 1–3 lines,
    operational rule only).

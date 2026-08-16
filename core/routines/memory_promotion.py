@@ -37,6 +37,8 @@ RIG_ROOT = Path(__file__).resolve().parents[2]
 CLAUDE_DIR = Path(os.path.expanduser("~/.claude"))
 PROJECTS_DIR = CLAUDE_DIR / "projects"
 REPORT_DIR = CLAUDE_DIR / "data" / "memory-promotion"
+# Verdicts already reached, so a judged memory stops resurfacing every week.
+DECISIONS = REPORT_DIR / "decisions.json"
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 FIELD_RE = r"^\s*{}:\s*[\"']?(.+?)[\"']?\s*$"
@@ -128,6 +130,20 @@ def field(meta: str, name: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def load_decisions() -> dict[str, dict]:
+    """slug -> {verdict, date, note} for memories already triaged.
+
+    Without this the report is identical every run: the same candidates return
+    after being promoted, deliberately left local, or judged already covered. A
+    weekly report that repeats last week's answers is one nobody reads by the
+    third week.
+    """
+    try:
+        return json.loads(DECISIONS.read_text())
+    except Exception:
+        return {}
+
+
 def load_memories() -> list[Memory]:
     memories: list[Memory] = []
     for memdir in live_project_dirs():
@@ -202,7 +218,9 @@ def coverage(memory: Memory, corpus: dict[str, set[str]]) -> tuple[float, str]:
 
 
 def classify(
-    memories: list[Memory], corpus: dict[str, set[str]]
+    memories: list[Memory],
+    corpus: dict[str, set[str]],
+    decided: dict[str, dict] | None = None,
 ) -> dict[str, list[tuple]]:
     """Split memories into what can be decided mechanically, and what cannot.
 
@@ -220,12 +238,17 @@ def classify(
     for memory in memories:
         by_slug[memory.slug].append(memory)
 
-    buckets: dict[str, list[tuple]] = {"duplicated": [], "candidates": []}
+    decided = load_decisions() if decided is None else decided
+    buckets: dict[str, list[tuple]] = {
+        "duplicated": [], "candidates": [], "settled": [],
+    }
     for slug, group in sorted(by_slug.items()):
         if not any(m.mtype in PROMOTABLE_TYPES for m in group):
             continue
         _, nearest = coverage(group[0], corpus)
-        if len(group) > 1:
+        if slug in decided:
+            buckets["settled"].append((slug, group, decided[slug]))
+        elif len(group) > 1:
             buckets["duplicated"].append((slug, group, nearest))
         else:
             buckets["candidates"].append((slug, group, nearest))
@@ -236,6 +259,44 @@ def short(project: str) -> str:
     return project.lstrip("-").replace("home-yulian-", "").replace("home-yulian", "~")
 
 
+def _section(title: str, blurb: list[str], rows: list[str]) -> list[str]:
+    """One report section, or nothing when it has no rows."""
+    if not rows:
+        return []
+    return ["", f"## {title}", ""] + blurb + [""] + rows
+
+
+def _rows_duplicated(rows: list[tuple]) -> list[str]:
+    out = []
+    for slug, group, nearest in rows:
+        where = ", ".join(short(m.project) for m in group)
+        out.append(f"- **{slug}** — in {where}")
+        out.append(f"  - {group[0].description or '(no description)'}")
+        if nearest:
+            out.append(f"  - nearest: `{nearest}`")
+    return out
+
+
+def _rows_candidates(rows: list[tuple]) -> list[str]:
+    out = []
+    for slug, group, nearest in rows:
+        out.append(f"- **{slug}** ({short(group[0].project)})")
+        out.append(f"  - {group[0].description or '(no description)'}")
+        if nearest:
+            out.append(f"  - nearest: `{nearest}`")
+    return out
+
+
+def _rows_settled(rows: list[tuple]) -> list[str]:
+    out = []
+    for slug, _group, verdict in rows:
+        label = verdict.get("verdict", "?")
+        out.append(f"- `{slug}` — **{label}** ({verdict.get('date', '?')})")
+        if verdict.get("note"):
+            out.append(f"  - {verdict['note']}")
+    return out
+
+
 def render(memories: list[Memory], buckets: dict[str, list[tuple]]) -> str:
     projects = len({m.project for m in memories})
     lines = [
@@ -243,7 +304,8 @@ def render(memories: list[Memory], buckets: dict[str, list[tuple]]) -> str:
         "",
         f"{len(memories)} memories across {projects} live project(s). "
         f"{len(buckets['duplicated'])} duplicated, "
-        f"{len(buckets['candidates'])} cross-cutting candidate(s).",
+        f"{len(buckets['candidates'])} undecided candidate(s), "
+        f"{len(buckets['settled'])} already judged.",
         "",
         "Auto memory is per-repository; the rig is cross-repo; nothing carries a",
         "rule from one to the other. These are the memories that may need to move.",
@@ -252,41 +314,28 @@ def render(memories: list[Memory], buckets: dict[str, list[tuple]]) -> str:
         "reading, NOT a claim the rule is already there. Judging coverage by word",
         "overlap is unreliable, so nothing here recommends deleting anything.",
     ]
-
-    if buckets["duplicated"]:
-        lines += [
-            "",
-            "## Recorded in more than one project",
-            "",
-            "The same rule written out once per repo is duplication the rig exists",
-            "to absorb, and the only signal here that needs no judgement.",
-            "",
-        ]
-        for slug, group, nearest in buckets["duplicated"]:
-            where = ", ".join(short(m.project) for m in group)
-            lines.append(f"- **{slug}** — in {where}")
-            lines.append(f"  - {group[0].description or '(no description)'}")
-            if nearest:
-                lines.append(f"  - nearest: `{nearest}`")
-
-    if buckets["candidates"]:
-        lines += [
-            "",
-            "## Cross-cutting guidance held in one project",
-            "",
-            "`type: feedback`/`user` is the schema's own word for guidance on how to",
-            "work — which does not stop at a repo boundary, unlike `project` and",
-            "`reference`. Each needs a human call: promote, leave, or already there.",
-            "",
-        ]
-        for slug, group, nearest in buckets["candidates"]:
-            lines.append(f"- **{slug}** ({short(group[0].project)})")
-            lines.append(f"  - {group[0].description or '(no description)'}")
-            if nearest:
-                lines.append(f"  - nearest: `{nearest}`")
-
-    if not any(buckets.values()):
-        lines += ["", "No candidates."]
+    lines += _section(
+        "Recorded in more than one project",
+        ["The same rule written out once per repo is duplication the rig exists",
+         "to absorb, and the only signal here that needs no judgement."],
+        _rows_duplicated(buckets["duplicated"]),
+    )
+    lines += _section(
+        "Cross-cutting guidance held in one project",
+        ["`type: feedback`/`user` is the schema's own word for guidance on how to",
+         "work — which does not stop at a repo boundary. Each needs a human call:",
+         "promote, leave, or already there."],
+        _rows_candidates(buckets["candidates"]),
+    )
+    lines += _section(
+        "Already judged — no action",
+        ["Recorded in `decisions.json` by a previous pass. Listed for audit, not",
+         "for re-triage: repeating last week's answers is how a weekly report",
+         "stops being read."],
+        _rows_settled(buckets["settled"]),
+    )
+    if not (buckets["duplicated"] or buckets["candidates"]):
+        lines += ["", "**Nothing new to judge.**"]
     return "\n".join(lines) + "\n"
 
 
@@ -303,6 +352,7 @@ def main() -> int:
                 "counts": {name: len(rows) for name, rows in buckets.items()},
                 "duplicated": [row[0] for row in buckets["duplicated"]],
                 "candidates": [row[0] for row in buckets["candidates"]],
+                "settled": [row[0] for row in buckets["settled"]],
             },
             indent=2,
         )

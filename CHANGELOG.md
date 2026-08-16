@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.16]
+
+### Added
+
+- **`domains/testing-tdd/verifying-the-test.md`** — mutation-test a regression
+  test (apply the exact defect, confirm *that* test fails; a mutation that
+  reddens everything is a broken mutation, not a result), and never mask a
+  failing test. Promoted from a per-repo memory; nothing in the rig covered
+  either, despite both being used repeatedly to catch checks that could only pass.
+- **`domains/devops/gh-account-vs-git-identity.md`** — `gh`'s active account is
+  not git's SSH identity. A private repo failing to resolve in `gh` is the
+  expected symptom of correct per-directory routing, not a fault, and
+  `gh auth switch` "fixes" it by silently repointing every later call globally.
+- Layer 1: committing and pushing need explicit permission each time; approval
+  for one push does not carry to the next.
+- `core/reasoning-preferences.md`: solve the underlying need, not just the
+  literal request — when they differ, say so and recommend the better route.
+
+### Changed
+
+- **`memory-promotion` now records verdicts** in
+  `~/.claude/data/memory-promotion/decisions.json` and reports judged slugs
+  under "already judged" instead of re-listing them. Before this the report was
+  byte-identical every week after a full triage pass: 11 candidates in, 11
+  candidates out. A weekly report that repeats last week's answers is one nobody
+  reads by the third week — the same cries-wolf failure that gets a noisy check
+  switched off. `classify()` takes the ledger as an argument rather than reading
+  the file, so tests cannot depend on the machine's real decisions.
+- First full triage pass recorded: 7 promoted, 5 deliberately kept local
+  (employer infrastructure and personal workflow trivia, which must not enter a
+  public repo however cross-cutting they look).
+
 ## [0.0.15]
 
 ### Changed

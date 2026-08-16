@@ -47,6 +47,8 @@ When the same repository is checked out on both WSL and Windows:
   The PreToolUse guardrail hard-blocks the commit either way.
 - Commit messages are a ONE-LINE conventional subject, never a body. Split a
   change that needs explaining into commits that each stand alone.
+- Committing and pushing need explicit permission each time. Approval for one
+  push does not carry to the next.
 
 ## Authoring code
 
