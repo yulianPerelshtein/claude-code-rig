@@ -430,25 +430,48 @@ def check_history_purged() -> CheckResult:
     if not shas:
         return skip(name, "purged-shas.local.txt is empty")
 
-    url = f"https://api.github.com/repos/{PUBLIC_REPO}/commits/"
-    still_served, unreachable = [], 0
-    for sha in shas[:20]:  # bounded: a sample is enough to detect the condition
-        probe = run(["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
-                     "-H", "Authorization:", "--max-time", "15", url + sha])
-        code = probe.stdout.strip()
+    # Authenticated when possible: unauthenticated API allows 60 req/hour, and
+    # exhausting it returns 403 — which an earlier version silently counted as
+    # "fine", so rate limiting made this check report clean. Only 404 proves a
+    # commit is gone; everything else is inconclusive and must not read as pass.
+    api = f"repos/{PUBLIC_REPO}/commits/"
+    url = f"https://api.github.com/{api}"
+    path_dirs = os.environ.get("PATH", "").split(":")
+    have_gh = any((Path(d) / "gh").exists() for d in path_dirs)
+    served, purged, inconclusive = [], 0, {}
+    for sha in shas[:200]:
+        if have_gh:
+            gh_env = {**os.environ,
+                      "GH_CONFIG_DIR": os.path.expanduser("~/.config/gh-personal")}
+            probe = run(["gh", "api", "-i", api + sha], env=gh_env)
+            head = (probe.stdout or "").splitlines()[:1]
+            parts = head[0].split() if head else []
+            code = parts[1] if len(parts) > 1 else ""
+            if not code:
+                code = "404" if "Not Found" in (probe.stderr or "") else ""
+        else:
+            argv = ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}",
+                    "-H", "Authorization:", "--max-time", "15", url + sha]
+            code = run(argv).stdout.strip()
         if code == "200":
-            still_served.append(sha)
-        elif code in ("", "000"):
-            unreachable += 1
-    if unreachable == min(len(shas), 20):
-        return skip(name, "remote unreachable (offline?)")
-    if still_served:
+            served.append(sha)
+        elif code == "404":
+            purged += 1
+        else:
+            key = code or "no-response"
+            inconclusive[key] = inconclusive.get(key, 0) + 1
+
+    if served:
         return bad(
             name,
-            f"{len(still_served)} purged commit(s) still served publicly",
-            [f"{s} -> HTTP 200 at {url}{s}" for s in still_served],
+            f"{len(served)} purged commit(s) still served publicly",
+            [f"{s} -> HTTP 200 at {url}{s}" for s in served],
         )
-    return ok(name, f"none of {min(len(shas), 20)} sampled purged commits are served")
+    if inconclusive:
+        detail = ", ".join(f"{k}x{v}" for k, v in sorted(inconclusive.items()))
+        total = sum(inconclusive.values())
+        return skip(name, f"inconclusive for {total} SHA(s) ({detail})")
+    return ok(name, f"all {purged} purged commits return 404")
 
 
 def check_ci_tools_pinned() -> CheckResult:

@@ -149,6 +149,11 @@ def test_statusline_script_expands_home():
 # ── purged history ────────────────────────────────────────────────────────────
 
 
+def _mock_run(code):
+    """A subprocess result carrying just an HTTP status code (curl branch)."""
+    return lambda *a, **k: type("P", (), {"stdout": code, "stderr": ""})()
+
+
 def test_history_purged_skips_when_nothing_is_declared_purged(monkeypatch, tmp_path):
     """No declared list means no claim to verify — skip, never a silent pass."""
     monkeypatch.setattr(sc, "PURGED_SHAS", tmp_path / "absent.txt")
@@ -168,21 +173,34 @@ def test_history_purged_fails_when_the_remote_still_serves_one(monkeypatch, tmp_
     f = tmp_path / "purged.txt"
     f.write_text("deadbee\n")
     monkeypatch.setattr(sc, "PURGED_SHAS", f)
-    monkeypatch.setattr(sc, "run", lambda *a, **k: type("P", (), {"stdout": "200"})())
+    monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setattr(sc, "run", _mock_run("200"))
     r = sc.check_history_purged()
     assert r.status == sc.FAIL and "still served" in r.summary
 
 
-def test_history_purged_skips_when_offline_rather_than_passing(monkeypatch, tmp_path):
-    """Offline must not read as 'purged'.
+@pytest.mark.parametrize("code", ["000", "403", "429", "500", ""])
+def test_history_purged_never_passes_on_a_non_404(monkeypatch, tmp_path, code):
+    """Only 404 proves a commit is gone.
 
-    Reporting clean when you could not check is the exact failure this exists for.
+    An earlier version counted anything that was not 200 as fine, so an API rate
+    limit (403) made this report clean while orphaned commits were live.
     """
     f = tmp_path / "purged.txt"
     f.write_text("deadbee\n")
     monkeypatch.setattr(sc, "PURGED_SHAS", f)
-    monkeypatch.setattr(sc, "run", lambda *a, **k: type("P", (), {"stdout": "000"})())
+    monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setattr(sc, "run", _mock_run(code))
     assert sc.check_history_purged().status == sc.SKIP
+
+
+def test_history_purged_passes_only_on_404(monkeypatch, tmp_path):
+    f = tmp_path / "purged.txt"
+    f.write_text("deadbee\n")
+    monkeypatch.setattr(sc, "PURGED_SHAS", f)
+    monkeypatch.setenv("PATH", "/nonexistent")
+    monkeypatch.setattr(sc, "run", _mock_run("404"))
+    assert sc.check_history_purged().status == sc.PASS
 
 
 # ── report rendering ──────────────────────────────────────────────────────────
