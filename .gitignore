@@ -91,3 +91,9 @@ learnings/private-*.md
 .dmypy.json
 uv.lock
 tools/scripts/purged-shas.local.txt
+
+# Coverage data — a SQLite DB embedding absolute paths (i.e. the username).
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/

@@ -78,7 +78,7 @@ fi
 if [ -z "$marker_re" ]; then
     echo "note: no redaction marker patterns available — skipping marker scan."
     echo "      (set REDACTION_PATTERNS_FILE or add redaction-patterns.local.txt)"
-elif [ ${#marker_files[@]} -gt 0 ] && grep -REn "$marker_re" "${marker_files[@]}" 2>/dev/null; then
+elif [ ${#marker_files[@]} -gt 0 ] && grep -REn --binary-files=text "$marker_re" "${marker_files[@]}" 2>/dev/null; then
     echo ""
     echo "BLOCKED: redaction-pattern hit. See the private redaction-patterns source."
     exit 1
@@ -87,7 +87,7 @@ fi
 # Well-known API-key prefixes with key-shaped suffixes (always runs).
 key_re='(^|[^A-Za-z0-9])(gsk_[A-Za-z0-9]{40,}|sk-[A-Za-z0-9_-]{40,}|xai-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|glpat-[A-Za-z0-9_-]{20,}|ABSK[A-Za-z0-9+/=]{40,})'
 
-if grep -REn "$key_re" "${filtered[@]}" 2>/dev/null; then
+if grep -REn --binary-files=text "$key_re" "${filtered[@]}" 2>/dev/null; then
     echo ""
     echo "BLOCKED: API key prefix with key-shaped suffix detected. Rotate, then redact."
     exit 1
