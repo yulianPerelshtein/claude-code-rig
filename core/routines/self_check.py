@@ -65,6 +65,8 @@ DELIVERED = ("core", "domains", "skills", ".mcp.json", ".lsp.json", ".claude-plu
 # GITIGNORED file: published, the list is a map of exactly what to go and fetch.
 PURGED_SHAS = RIG_ROOT / "tools" / "scripts" / "purged-shas.local.txt"
 PUBLIC_REPO = "yulianPerelshtein/claude-code-rig"
+# 404 = repo absent; 422 = "No commit found for SHA" on the commits endpoint.
+GONE_CODES = {"404", "422"}
 
 
 @dataclass
@@ -432,8 +434,11 @@ def check_history_purged() -> CheckResult:
 
     # Authenticated when possible: unauthenticated API allows 60 req/hour, and
     # exhausting it returns 403 — which an earlier version silently counted as
-    # "fine", so rate limiting made this check report clean. Only 404 proves a
-    # commit is gone; everything else is inconclusive and must not read as pass.
+    # "fine", so rate limiting made this check report clean.
+    #
+    # GONE = 404 (repo absent) or 422, which is what this endpoint returns for an
+    # absent commit: {"message": "No commit found for SHA: ..."}. Anything else,
+    # including 403, is INCONCLUSIVE and must never read as a pass.
     api = f"repos/{PUBLIC_REPO}/commits/"
     url = f"https://api.github.com/{api}"
     path_dirs = os.environ.get("PATH", "").split(":")
@@ -455,7 +460,7 @@ def check_history_purged() -> CheckResult:
             code = run(argv).stdout.strip()
         if code == "200":
             served.append(sha)
-        elif code == "404":
+        elif code in GONE_CODES:
             purged += 1
         else:
             key = code or "no-response"
@@ -471,7 +476,7 @@ def check_history_purged() -> CheckResult:
         detail = ", ".join(f"{k}x{v}" for k, v in sorted(inconclusive.items()))
         total = sum(inconclusive.values())
         return skip(name, f"inconclusive for {total} SHA(s) ({detail})")
-    return ok(name, f"all {purged} purged commits return 404")
+    return ok(name, f"all {purged} purged commits are gone (404/422)")
 
 
 def check_ci_tools_pinned() -> CheckResult:

@@ -194,13 +194,16 @@ def test_history_purged_never_passes_on_a_non_404(monkeypatch, tmp_path, code):
     assert sc.check_history_purged().status == sc.SKIP
 
 
-def test_history_purged_passes_only_on_404(monkeypatch, tmp_path):
+@pytest.mark.parametrize("code", ["404", "422"])
+def test_history_purged_passes_on_gone_codes(monkeypatch, tmp_path, code):
+    """422 is what the commits endpoint returns for an absent commit."""
     f = tmp_path / "purged.txt"
     f.write_text("deadbee\n")
     monkeypatch.setattr(sc, "PURGED_SHAS", f)
     monkeypatch.setenv("PATH", "/nonexistent")
-    monkeypatch.setattr(sc, "run", _mock_run("404"))
+    monkeypatch.setattr(sc, "run", _mock_run(code))
     assert sc.check_history_purged().status == sc.PASS
+
 
 
 # ── report rendering ──────────────────────────────────────────────────────────
