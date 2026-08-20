@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.21]
+
+### Fixed
+
+- **`git -C` bypassed every git rule in the blocklist.** Git accepts its global
+  options between `git` and the subcommand, so `git -C <path> push --force`
+  never matched a rule anchored on `git push` — and `git -C` is the rig's own
+  idiom, the spelling used throughout its tooling. Force-push, hard reset,
+  `clean -f` and the `Co-Authored-By` block all evaporated behind it, as did
+  `--git-dir=`, `--work-tree`, `-c` and `--no-pager`. Every git rule now absorbs
+  a run of global options first. Confirmed by executing the hook, not by reading
+  it: the plain forms blocked while the `-C` forms were approved.
+- **The guardrail failed open on an unreadable blocklist.** A missing or corrupt
+  `blocked-commands.json` yielded an empty rule set, so the hook approved a
+  force-push, exited 0 and printed nothing — a partial sync silently disarmed
+  every rule. Unreadable now prompts, naming the problem; a file that parses but
+  declares no patterns is still honoured as a deliberate empty policy.
+
+### Changed
+
+- `guardrail-probes.json` probes the global-option forms explicitly, so
+  `self-check` asserts against the *installed* guardrail that the bypass stays
+  closed.
+
 ## [0.0.20]
 
 ### Fixed

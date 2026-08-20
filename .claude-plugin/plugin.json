@@ -1,6 +1,6 @@
 {
   "name": "claude-code-rig",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles.",
   "skills": [
     "./core/skills/",
