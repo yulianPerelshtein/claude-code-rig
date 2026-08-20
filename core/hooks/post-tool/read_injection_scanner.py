@@ -74,20 +74,48 @@ def is_excluded_path(file_path: str) -> bool:
     )
 
 
+def _as_text(value: object) -> str:
+    """Flatten one content slot: a string, a list of content blocks, or absent."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts = []
+        for block in value:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                parts.append(str(block.get("text", "")))
+        return "\n".join(parts)
+    return str(value)
+
+
 def extract_content(resp: object) -> str:
-    """Pull text from a tool_response that may be a string or a structured
-    {content: str | [blocks]} object."""
+    """Pull scannable text out of a PostToolUse ``tool_response``.
+
+    Reads every slot the scanned tools actually populate: Read nests its text
+    under ``file.content``, WebFetch returns the model's page summary under
+    ``result``. A top-level ``content`` key is still honoured for a plain or
+    block-shaped response.
+
+    Each branch is anchored to a captured payload in ``tests/hooks/fixtures/``.
+    An earlier version read only top-level ``content`` — a key neither tool
+    sends — so it extracted the empty string and the hook scanned nothing from
+    its first commit while ten hand-written tests passed. Do not add a branch
+    here that is not backed by a captured fixture.
+    """
     if isinstance(resp, str):
         return resp
-    if isinstance(resp, dict):
-        c = resp.get("content")
-        if isinstance(c, list):
-            return "\n".join(
-                b if isinstance(b, str) else str(b.get("text", "")) for b in c
-            )
-        if c is not None:
-            return str(c)
-    return ""
+    if not isinstance(resp, dict):
+        return ""
+    slots = []
+    file_obj = resp.get("file")
+    if isinstance(file_obj, dict):
+        slots.append(_as_text(file_obj.get("content")))
+    slots.append(_as_text(resp.get("result")))
+    slots.append(_as_text(resp.get("content")))
+    return "\n".join(s for s in slots if s)
 
 
 def scan(content: str, patterns: list[re.Pattern]) -> list[str]:
