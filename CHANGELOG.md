@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.20]
+
+### Fixed
+
+- **`read_injection_scanner` had never scanned a byte.** The only ingest-time
+  injection control read `tool_response.content`, a key neither `Read` nor
+  `WebFetch` sends: `Read` nests its text under `file.content`, `WebFetch`
+  returns the model's page summary under `result`. Extraction therefore returned
+  the empty string, fell under the minimum-length check, and exited — from the
+  hook's first commit. Ten tests passed throughout, because their fixtures were
+  hand-written from the same wrong assumption as the code. Confirmed by
+  capturing real payloads from live sessions, and by driving a poisoned file
+  through a real session end to end.
+- **The redaction gate in CI failed open.** An unset or empty
+  `REDACTION_PATTERNS` secret fell through to the committed template, which
+  holds no real markers, so the job passed green while protecting nothing —
+  the same shape as the drift that once let CI stay green over a real leak.
+  A missing secret now fails the job; only a fork, which cannot receive secrets
+  at all, still runs best-effort.
+
+### Added
+
+- **`tools/capture-hook-payloads.sh`** — rebuilds `tests/hooks/fixtures/` from
+  payloads a live session actually emits, sanitising every machine-identifying
+  value and refusing to finish if the result fails the redaction gate. Hand-authored
+  fixtures encode the same assumption as the code under test, so they cannot
+  detect a wrong one; that was the root cause above, not a detail of it.
+- Fixture-shape tests that pin the captured structure, so an upstream response
+  change fails loudly instead of silently muting the hook.
+
+### Security
+
+- `.gitignore` now refuses the marker source list under any of its names,
+  anywhere in the tree. The contents of those files are the sensitive data, and
+  this repo is public; the accident to defend against is a stray copy, which a
+  root-anchored rule would miss.
 
 ### Removed
 
