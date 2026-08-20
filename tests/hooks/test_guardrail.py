@@ -7,6 +7,7 @@ cannot settle the conflict. Exit 2 is the hard block that does.
 """
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -115,3 +116,50 @@ def test_blocks_destructive_git_behind_global_options(command):
 )
 def test_allows_ordinary_git_behind_global_options(command):
     assert guard(command)[0] == 0
+
+
+# --- fail closed -------------------------------------------------------------
+# A missing or corrupt blocklist used to yield an empty rule set, so the hook
+# approved everything and printed nothing. A partial sync silently disarmed it.
+
+
+def _isolated_hook(tmp_path, blocklist_text=None):
+    """Copy the hook where neither blocklist candidate path can resolve."""
+    hooks = tmp_path / "hooks" / "pre-tool"
+    hooks.mkdir(parents=True)
+    (tmp_path / "home").mkdir()
+    if blocklist_text is not None:
+        (tmp_path / "hooks" / "blocked-commands.json").write_text(blocklist_text)
+    copy = hooks / "guardrail.py"
+    copy.write_text(HOOK.read_text())
+    return copy
+
+
+def _run_isolated(hook_copy, tmp_path, command):
+    payload = {"tool_name": "Bash", "tool_input": {"command": command}}
+    proc = subprocess.run(
+        [sys.executable, str(hook_copy)],
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "HOME": str(tmp_path / "home")},
+    )
+    return proc.returncode, proc.stdout
+
+
+@pytest.mark.parametrize("blocklist_text", [None, "{not json", '{"patterns": [}'])
+def test_unreadable_blocklist_prompts_instead_of_allowing(tmp_path, blocklist_text):
+    hook = _isolated_hook(tmp_path, blocklist_text)
+    code, out = _run_isolated(hook, tmp_path, f"git {FORCE_PUSH}")
+    assert code == 0
+    decision = json.loads(out)["hookSpecificOutput"]
+    assert decision["permissionDecision"] == "ask"
+    assert "GUARDRAIL NOT LOADED" in decision["permissionDecisionReason"]
+
+
+def test_valid_but_empty_blocklist_is_a_deliberate_policy(tmp_path):
+    """An empty pattern list parses fine and must NOT be treated as breakage."""
+    hook = _isolated_hook(tmp_path, '{"patterns": []}')
+    code, out = _run_isolated(hook, tmp_path, f"git {FORCE_PUSH}")
+    assert (code, out.strip()) == (0, "")

@@ -18,13 +18,19 @@ CRED_READ = re.compile(
 )
 
 
-def load_blocklist() -> list[tuple[str, str]]:
-    """Load blocked patterns from JSON config. Falls back to empty list on error.
+def load_blocklist() -> list[tuple[str, str]] | None:
+    """Load blocked patterns from JSON config.
 
     Resolves the blocklist relative to this file first (it ships at
     ``core/hooks/blocked-commands.json`` next to the hook tree, which works in
     the plugin cache dir via ``${CLAUDE_PLUGIN_ROOT}``), then falls back to the
     legacy deployed path ``~/.claude/hooks/blocked-commands.json``.
+
+    Returns ``None`` when no candidate could be read or parsed. That is a broken
+    install, NOT an empty policy, and the caller must fail closed: this used to
+    return ``[]``, so a partial sync silently disabled every rule and the hook
+    approved a force-push without printing anything at all. A file that parses
+    but declares no patterns is a deliberate empty policy and still returns [].
     """
     candidates = [
         Path(__file__).resolve().parent.parent / "blocked-commands.json",
@@ -37,7 +43,7 @@ def load_blocklist() -> list[tuple[str, str]]:
             return [(p["regex"], p["reason"]) for p in data.get("patterns", [])]
         except Exception:
             continue
-    return []
+    return None
 
 
 def ask(reason: str) -> None:
@@ -74,6 +80,13 @@ def main() -> None:
         # Destructive patterns are a hard block FIRST — even on /mnt paths,
         # `rm -rf /mnt/c/...` must be denied, not merely confirmed.
         blocklist = load_blocklist()
+        if blocklist is None:
+            ask(
+                "GUARDRAIL NOT LOADED: blocked-commands.json could not be read, "
+                "so NO destructive-command rule is in force right now. This is "
+                "usually a partial sync — run install/sync-rig.sh. Confirm only "
+                f"if you have checked this command yourself.\nCommand: {command[:200]}"
+            )
         for pattern, reason in blocklist:
             if re.search(pattern, command, re.IGNORECASE):
                 print(
