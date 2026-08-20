@@ -47,9 +47,18 @@ warn() { printf '%sWARN %s  %s\n' "${Y}" "${N}" "$1"; }
 fail() { printf '%sFAIL %s  %s\n' "${R}" "${N}" "$1"; }
 step() { printf '\n== %s ==\n' "$1"; }
 
+# A prompt that cannot be shown must not pass for a declined one. Without a tty
+# this used to return NO in silence, so a skipped bump or push left every visible
+# line reading OK while the run delivered nothing. Name the question instead, and
+# record that the run was incomplete.
+CONFIRM_BLOCKED=0
 confirm() {
     [[ "${ASSUME_YES}" -eq 1 ]] && return 0
-    [[ ! -t 0 ]] && return 1
+    if [[ ! -t 0 ]]; then
+        CONFIRM_BLOCKED=1
+        warn "cannot prompt (no tty): \"$1\" — taken as NO"
+        return 1
+    fi
     local reply
     read -r -p "$1 [y/N] " reply
     [[ "${reply}" =~ ^[Yy]$ ]]
@@ -189,7 +198,19 @@ run_or_echo claude plugin update "${PLUGIN_ID}" || warn "plugin update reported 
 # Layer 1 and the statusline need no step: they read the checkout directly.
 ok "Layer 1 + statusline follow the checkout already (no action needed)"
 
-# --- 6. prove it ---------------------------------------------------------------
+# --- 6. did every step actually happen? ----------------------------------------
+# A confirmation that could not be shown was answered NO on the user's behalf, so
+# this run did less than it was asked to. Exit non-zero: the steps above all
+# print OK, and that is exactly how a run that delivered nothing looked clean.
+if [[ "${CONFIRM_BLOCKED}" -eq 1 ]]; then
+    step "Result"
+    fail "a confirmation could not be shown (no tty) and was taken as NO."
+    echo "       This run did not complete every step. Re-run in a terminal,"
+    echo "       or pass --yes."
+    exit 3
+fi
+
+# --- 7. prove it ---------------------------------------------------------------
 step "Verify"
 if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "    [dry-run] core/routines/run-routine.sh self-check"

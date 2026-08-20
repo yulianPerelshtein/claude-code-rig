@@ -24,6 +24,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   the same shape as the drift that once let CI stay green over a real leak.
   A missing secret now fails the job; only a fork, which cannot receive secrets
   at all, still runs best-effort.
+- **`sync-rig.sh` answered its own prompts NO in silence.** Without a tty
+  `confirm()` returned "declined", so a skipped version bump or push looked
+  identical to a deliberate one while every visible line still read `OK`. The
+  suppressed question is now named as it is skipped, and a run that could not
+  ask exits non-zero instead of reporting a clean sync.
 
 ### Added
 
