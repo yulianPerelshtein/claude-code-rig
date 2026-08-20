@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **Quick-note capture (`qn`)** — the skill, the shared `tools/cli-helpers/qn.sh`,
+  and with them the daily-journal capture path. Removed on measurement rather
+  than taste: in the vault it served, 179 structured notes carried a `created:`
+  date against 2 journal entries, the last a month stale, and a sibling `inbox/`
+  had never received a single note. Every durable finding in those entries had
+  already been rewritten as a structured note, in more detail — so the journal
+  was a duplicate capture layer, and capture without retrieval is a diary. The
+  vault replaced it with a template scaffolder that writes the structured note
+  directly. The `qn` shell function in `~/.bash_aliases` calls the deleted script
+  and must be removed there too; it is not managed by this repo.
+
 ## [0.0.17]
 
 ### Changed
