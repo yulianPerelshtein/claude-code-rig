@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.22]
+
+### Fixed
+
+- **The dream loop had never surfaced a real theme.** Eighteen reports across a
+  month, every one of them consolidating harness scaffolding rather than work:
+  the top "recurring themes" were `command-args`, `local-command-caveat`,
+  `generated`, `asks`, `below`. Three causes, all now closed.
+  - **28% of the corpus was the rig's own probe.** `self-check`'s `layer1-loads`
+    check spawns a headless session daily, and its summary is indistinguishable
+    from real work downstream. Sessions that no human drove are now marked at the
+    source — `session_end.py` records `Synthetic: true` when
+    `CC_SYNTHETIC_SESSION` is set, and the probe and the payload-capture harness
+    both set it. Two heuristics catch anything unmarked: a project directory
+    under a temp dir, and too few messages to hold an exchange.
+  - **41% of captured "prompts" were never typed by a human** — 126 of 309
+    bullets opened with `<local-command-caveat>`, `<command-name>`,
+    `<local-command-stdout>` or `<task-notification>`. Stripping the tags alone
+    was not enough: the caveat's own prose then became the theme table. Prompts
+    that open with a wrapper tag are now dropped whole. Paths, URLs and
+    interrupt notices are stripped, so `home`, the username and the employer
+    name stop ranking as themes.
+  - **The window was applied before filtering**, so one burst of probe runs
+    emptied it. Filtering now precedes the window, which also rises from 7 to 25.
+
+### Changed
+
+- `dream-loop.log` records `summaries_skipped` alongside `summaries_read`, so a
+  corpus quietly filling with probes is visible in telemetry.
+
 ## [0.0.21]
 
 ### Fixed
