@@ -1,0 +1,27 @@
+{
+  "cwd": "/work/sample",
+  "duration_ms": 6,
+  "effort": {
+    "level": "xhigh"
+  },
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "default",
+  "prompt_id": "00000000-0000-4000-8000-000000000002",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "tool_input": {
+    "file_path": "/work/sample/sample.md"
+  },
+  "tool_name": "Read",
+  "tool_response": {
+    "file": {
+      "content": "This is an ordinary sample document about widget inventory.\nNothing special here at all.\nJust three plain lines of prose.\n",
+      "filePath": "/work/sample/sample.md",
+      "numLines": 3,
+      "startLine": 1,
+      "totalLines": 3
+    },
+    "type": "text"
+  },
+  "tool_use_id": "toolu_00000000000000000000000000",
+  "transcript_path": "/home/dev/.claude/projects/-work-sample/session.jsonl"
+}

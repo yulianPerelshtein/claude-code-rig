@@ -1,0 +1,26 @@
+{
+  "cwd": "/work/sample",
+  "duration_ms": 6,
+  "effort": {
+    "level": "xhigh"
+  },
+  "hook_event_name": "PostToolUse",
+  "permission_mode": "default",
+  "prompt_id": "00000000-0000-4000-8000-000000000002",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "tool_input": {
+    "prompt": "what is the page title",
+    "url": "https://example.com"
+  },
+  "tool_name": "WebFetch",
+  "tool_response": {
+    "bytes": 559,
+    "code": 200,
+    "codeText": "OK",
+    "durationMs": 1357,
+    "result": "The page title is \"Example Domain\". The page explains that the domain is reserved for use in illustrative examples.\n",
+    "url": "https://example.com"
+  },
+  "tool_use_id": "toolu_00000000000000000000000000",
+  "transcript_path": "/home/dev/.claude/projects/-work-sample/session.jsonl"
+}
