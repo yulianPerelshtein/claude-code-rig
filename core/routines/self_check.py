@@ -181,7 +181,10 @@ def check_layer1_loads() -> CheckResult:
         probe = run(
             ["claude", "-p", "Reply with the single word: ok. Use no tools."],
             cwd=tmp,
-            env={**os.environ, "CLAUDE_PROJECT_DIR": tmp},
+            # Marked so dream_loop excludes it: this probe runs daily and its
+            # summaries were 28% of the consolidation corpus.
+            env={**os.environ, "CLAUDE_PROJECT_DIR": tmp,
+                 "CC_SYNTHETIC_SESSION": "1"},
             timeout=240,
         )
         log = Path(tmp) / ".claude" / "data" / "logs" / "instructions_loaded.jsonl"

@@ -25,6 +25,10 @@ trap '[[ "${KEEP}" -eq 0 ]] && chmod -R u+w "${WORK}" 2>/dev/null && find "${WOR
 
 command -v claude >/dev/null || { echo "capture: 'claude' not on PATH" >&2; exit 1; }
 
+# These are real sessions and get real summaries; mark them so the dream loop
+# does not consolidate the harness's own prompts into "recurring themes".
+export CC_SYNTHETIC_SESSION=1
+
 mkdir -p "${WORK}/.claude"
 cat > "${WORK}/dump.py" <<'PY'
 import sys, json, os, time

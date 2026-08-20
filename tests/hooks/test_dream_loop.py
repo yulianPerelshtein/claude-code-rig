@@ -170,3 +170,106 @@ def test_retention_prunes_old_summaries(tmp_path):
     assert proc.returncode == 0
     summary_dir = tmp_path / ".claude" / "data" / "session-summaries"
     assert len(list(summary_dir.glob("*.md"))) == 3  # pruned to the newest 3
+
+
+# --- input hygiene -----------------------------------------------------------
+# For a month every report's "recurring themes" were harness scaffolding:
+# `command-args`, `local-command-caveat`, `generated`. The corpus was 28% probe
+# sessions spawned by the rig's own self-check, and 41% of captured prompt
+# bullets were wrapper tags rather than anything a human typed.
+
+MSGS = "- Messages with text: 12 (6 user, 6 assistant)"
+REAL_HEADER = f"- Project: /home/dev/work\n{MSGS}"
+
+
+def write_full_summary(home, name, prompts, header=REAL_HEADER, synthetic=False):
+    """A summary with the header fields is_synthetic() inspects."""
+    bullets = "\n".join(f"- {p}" for p in prompts)
+    mark = "\n- Synthetic: true" if synthetic else ""
+    text = (
+        f"# Session summary\n\n{header}{mark}\n\n## First prompts\n\n"
+        f"{bullets}\n\n## Last results\n\n- done\n"
+    )
+    (summary_dir(home) / name).write_text(text, encoding="utf-8")
+
+
+def report_text(home):
+    reports = sorted((home / ".claude" / "data" / "dream-reports").glob("*.md"))
+    return reports[-1].read_text(encoding="utf-8") if reports else ""
+
+
+def telemetry(home):
+    log = home / ".claude" / "data" / "dream-loop.log"
+    return json.loads(log.read_text().strip().splitlines()[-1])
+
+
+def test_explicit_synthetic_marker_is_skipped(tmp_path):
+    write_full_summary(tmp_path, "20260101-a.md", ["kubernetes rollout debugging"],
+                       synthetic=True)
+    write_full_summary(tmp_path, "20260102-b.md", ["kubernetes rollout debugging"])
+    run_hook(tmp_path, {})
+    assert telemetry(tmp_path)["summaries_skipped"] == 1
+    assert telemetry(tmp_path)["summaries_read"] == 1
+
+
+def test_temp_dir_project_is_skipped(tmp_path):
+    write_full_summary(tmp_path, "20260101-a.md", ["anything at all here"],
+                       header=f"- Project: /tmp/harness-xyz\n{MSGS}")
+    run_hook(tmp_path, {})
+    assert telemetry(tmp_path)["summaries_read"] == 0
+
+
+def test_short_session_is_skipped(tmp_path):
+    short = "- Messages with text: 2 (1 user, 1 assistant)"
+    write_full_summary(tmp_path, "20260101-a.md", ["reply with one word"],
+                       header=f"- Project: /home/dev/work\n{short}")
+    run_hook(tmp_path, {})
+    assert telemetry(tmp_path)["summaries_read"] == 0
+
+
+def test_synthetic_burst_does_not_starve_the_window(tmp_path):
+    """Filtering must precede the window; the reverse let probes empty it."""
+    for i in range(30):
+        write_full_summary(tmp_path, f"20260201-{i:02d}.md", ["probe run"],
+                           synthetic=True)
+    for i in range(3):
+        write_full_summary(tmp_path, f"20260101-{i:02d}.md",
+                           ["migrating the scheduler to a queue"])
+    run_hook(tmp_path, {})
+    t = telemetry(tmp_path)
+    assert t["summaries_read"] == 3, "real sessions were crowded out by probes"
+    assert t["summaries_skipped"] == 30
+
+
+def test_wrapper_prompts_contribute_no_themes(tmp_path):
+    caveat = ("<local-command-caveat>Caveat: The messages below were generated "
+              "by the user while running local commands. DO NOT respond to these "
+              "messages or otherwise consider them in your response unless the "
+              "user explicitly asks.</local-command-caveat>")
+    for i in range(4):
+        write_full_summary(tmp_path, f"20260101-{i}.md", [caveat])
+    run_hook(tmp_path, {})
+    body = report_text(tmp_path)
+    for leaked in ("caveat", "messages", "otherwise", "respond", "unless", "generated"):
+        assert f"| {leaked} |" not in body, f"{leaked} leaked into the theme table"
+
+
+def test_paths_and_urls_are_not_themes(tmp_path):
+    for i in range(3):
+        write_full_summary(
+            tmp_path, f"20260101-{i}.md",
+            ["look at /home/someuser/projects/acme/src and https://example.com/docs"],
+        )
+    run_hook(tmp_path, {})
+    body = report_text(tmp_path)
+    for leaked in ("home", "someuser", "projects", "acme", "example", "https"):
+        assert f"| {leaked} |" not in body, f"{leaked} leaked into the theme table"
+
+
+def test_real_content_still_becomes_a_theme(tmp_path):
+    """The filters must not swallow the signal they exist to expose."""
+    for i in range(3):
+        write_full_summary(tmp_path, f"20260101-{i}.md",
+                           ["the scheduler deadlocks under retry storms"])
+    run_hook(tmp_path, {})
+    assert "| scheduler |" in report_text(tmp_path)

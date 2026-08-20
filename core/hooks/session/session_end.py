@@ -106,6 +106,13 @@ def render_summary(
         f"- Project: {data.get('cwd', '(unknown)')}",
         f"- Messages with text: {count} "
         f"({len(prompts)} user, {len(results)} assistant)",
+    ]
+    # Probes and capture harnesses spawn real sessions, so their summaries are
+    # indistinguishable from real work downstream. dream_loop consolidates these
+    # files, and unmarked probe runs came to dominate its window.
+    if os.environ.get("CC_SYNTHETIC_SESSION"):
+        lines.append("- Synthetic: true")
+    lines += [
         "",
         "## First prompts",
         "",

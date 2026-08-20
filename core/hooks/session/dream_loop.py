@@ -18,6 +18,7 @@ Contract (per ENHANCEMENTS_BACKLOG §7):
 
 import re
 import sys
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -30,24 +31,58 @@ from utils.constants import (  # noqa: E402
 )
 from utils.hooklib import append_jsonl, int_env, read_payload  # noqa: E402
 
-DEFAULT_WINDOW = 7
+# A window of 7 let one burst of probe runs fill the corpus; synthetic sessions
+# are now excluded BEFORE the window is applied, so this counts real sessions.
+DEFAULT_WINDOW = 25
 DEFAULT_KEEP = 500  # retention: max session-summary files to keep on disk
 DREAM_LOG_MAX_LINES = 2000  # cap dream-loop.log when it grows past ~512 KB
 TOP_THEMES = 12
 RECURRING_MIN_SESSIONS = 2
 SNIPPET_LEN = 200
-# WORD_RE requires >= 4 chars, so only meaningful long tokens are counted; the
-# domain words below suppress the session-summary scaffolding from leaking as
-# "themes" (e.g. the "- (none captured)" placeholder).
+# A session with almost no exchange carries no lesson; below this it is a probe
+# or an aborted start, whether or not anything marked it.
+MIN_MESSAGES = 6
+
+# Machine-generated wrappers Claude Code injects into a transcript. Their tag
+# names and boilerplate prose were, for a month, the entire theme table: every
+# report's top themes were `command-args`, `local-command-caveat`, `generated`
+# and friends, because they recur in every session that runs a slash command.
+MARKUP_RE = re.compile(r"<[^>]*>")
+# A "prompt" that opens with a wrapper tag is not a human prompt at all: it is
+# Claude Code injecting the slash-command envelope, a command's stdout, or a
+# task notification. 126 of 309 captured prompt bullets were these. Stripping
+# the tags alone was not enough — the caveat's own prose ("the messages below
+# were generated ... DO NOT respond ... unless") then became the theme table.
+WRAPPER_LEAD_RE = re.compile(r"^\s*<[a-z][a-z0-9-]*>")
+URL_RE = re.compile(r"https?://\S+")
+# Absolute paths tokenise into their segments, which surfaced `home`, the
+# username and the employer name as "recurring themes" — noise, and precisely
+# the strings the redaction markers exist to keep out of shared text.
+PATH_RE = re.compile(r"(?:~|\.{0,2})/[\w.~/-]+")
+# Harness notices that appear mid-transcript rather than as a wrapper tag.
+NOTICE_RE = re.compile(r"\[(?:request interrupted|[^\]]*interrupted by user)[^\]]*\]",
+                       re.IGNORECASE)
+# WORD_RE requires >= 4 chars, so only meaningful long tokens are counted.
 STOPWORDS = frozenset(
     """
     that this with from have will your you are not but its into over only
     just then them they when what which while none captured user assistant
     session summary first last results
+    command commands command-name command-args command-message caveat
+    local-command-caveat local task-notification task-id tool-use-id
+    output-file system-reminder bash-input bash-stdout bash-stderr status
+    stdout stderr asks below consider explicitly generated response
+    something these those should would could might must need needs want
+    wants right there here like about after before because being other
+    than their thing things still also make made does done please thanks
+    when where does note only very much many some such into onto
     """.split()
 )
 WORD_RE = re.compile(r"[a-z][a-z0-9_-]{3,}")
 BULLET_RE = re.compile(r"^- (.+)$")
+PROJECT_RE = re.compile(r"^- Project:\s*(.+)$", re.MULTILINE)
+MESSAGES_RE = re.compile(r"^- Messages with text:\s*(\d+)", re.MULTILINE)
+SYNTHETIC_RE = re.compile(r"^- Synthetic:\s*true\s*$", re.MULTILINE | re.IGNORECASE)
 
 
 def sorted_summaries() -> list[Path]:
@@ -59,6 +94,51 @@ def sorted_summaries() -> list[Path]:
         key=lambda p: (p.stat().st_mtime, p.name),
         reverse=True,
     )
+
+
+def is_synthetic(text: str) -> bool:
+    """True for a session that no human drove, so it carries no lesson.
+
+    Three signals, cheapest first: the explicit marker session_end.py writes
+    when ``CC_SYNTHETIC_SESSION`` is set; a project directory under a temp dir
+    (every harness runs there); and too few messages to contain an exchange.
+
+    This exists because the rig's own ``self-check`` probe spawns a headless
+    session daily. Its summaries were 28% of the corpus and, being short and
+    identical, dominated every theme table they appeared in.
+    """
+    if SYNTHETIC_RE.search(text):
+        return True
+    project = PROJECT_RE.search(text)
+    if project:
+        path = project.group(1).strip()
+        tmp = tempfile.gettempdir().rstrip("/")
+        if path.startswith((f"{tmp}/", "/tmp/", "/var/tmp/")):
+            return True
+    messages = MESSAGES_RE.search(text)
+    return bool(messages) and int(messages.group(1)) < MIN_MESSAGES
+
+
+def real_summaries(paths: list[Path], window: int) -> tuple[list[Path], int]:
+    """Newest `window` non-synthetic summaries, plus how many were skipped.
+
+    Filtering happens BEFORE the window: taking the newest N and filtering after
+    let a single burst of probe runs empty the window.
+    """
+    kept: list[Path] = []
+    skipped = 0
+    for path in paths:
+        if len(kept) >= window:
+            break
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if is_synthetic(text):
+            skipped += 1
+            continue
+        kept.append(path)
+    return kept, skipped
 
 
 def prune_summaries(files: list[Path], keep: int) -> None:
@@ -98,12 +178,16 @@ def aggregate(paths: list[Path]) -> tuple[list[tuple[str, str]], list[tuple[str,
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        prompts = first_prompts(text)
-        snippet = prompts[0][:SNIPPET_LEN] if prompts else "(no prompts captured)"
+        prompts = [
+            p for p in first_prompts(text) if not WRAPPER_LEAD_RE.match(p)
+        ]
+        snippet = prompts[0][:SNIPPET_LEN] if prompts else "(no user prompt captured)"
         entries.append((path.name, snippet))
-        words = {
-            w for w in WORD_RE.findall(" ".join(prompts).lower()) if w not in STOPWORDS
-        }
+        text_l = " ".join(prompts).lower()
+        for pattern in (MARKUP_RE, NOTICE_RE, URL_RE, PATH_RE):
+            text_l = pattern.sub(" ", text_l)
+        cleaned = text_l
+        words = {w for w in WORD_RE.findall(cleaned) if w not in STOPWORDS}
         for w in words:
             doc_freq[w] = doc_freq.get(w, 0) + 1
     themes = sorted(
@@ -162,10 +246,11 @@ def main() -> None:
     report_path = ""
     patterns_found = 0
     summaries_read = 0
+    summaries_skipped = 0
     error = ""
     try:
         all_summaries = sorted_summaries()
-        summaries = all_summaries[:window]
+        summaries, summaries_skipped = real_summaries(all_summaries, window)
         summaries_read = len(summaries)
         if not summaries:
             print("dream_loop: no session summaries yet, skipping", file=sys.stderr)
@@ -184,6 +269,7 @@ def main() -> None:
             "ts": datetime.now().isoformat(),
             "trigger": trigger,
             "summaries_read": summaries_read,
+            "summaries_skipped": summaries_skipped,
             "patterns_found": patterns_found,
             "report_path": report_path,
             "latency_ms": round((time.monotonic() - start) * 1000, 1),
