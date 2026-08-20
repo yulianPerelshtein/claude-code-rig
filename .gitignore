@@ -6,6 +6,14 @@ private/**
 # supplied locally / via the REDACTION_PATTERNS CI secret.
 tools/scripts/redaction-patterns.local.txt
 
+# The marker SOURCE list and its sweeps live only in the private repo. Ignored
+# by name ANYWHERE in the tree, because the accident to defend against is a
+# stray copy landing here — the contents of these files ARE the sensitive data,
+# and this repo is public. No tracked file has ever used these names.
+**/markers.txt
+**/markers.*.txt
+**/markers-*.txt
+
 # ── State / runtime / caches ────────────────────────────────────────
 .cache/
 .claude/
