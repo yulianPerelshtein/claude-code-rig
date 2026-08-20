@@ -70,3 +70,48 @@ def test_prompts_rather_than_blocks_on_windows_mount():
     assert code == 0
     decision = json.loads(out)["hookSpecificOutput"]
     assert decision["permissionDecision"] == "ask"
+
+# --- git global options ------------------------------------------------------
+# Git accepts global options BETWEEN `git` and the subcommand, so `git -C <path>
+# push` never matched a rule anchored on `git push`. That is the rig's own idiom
+# (gitops.py, cli.py), so every git rule was bypassable by the most natural
+# spelling. Fragments are split to keep a blocked sequence off any single line.
+
+FORCE_PUSH = "push --force"
+SHORT_FORCE = "push origin main -f"
+HARD_RESET = "reset --hard"
+CLEAN_FORCE = "clean -fd"
+WORKDIR = "/tmp/somerepo"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"git {FORCE_PUSH}",
+        f"git -C {WORKDIR} {FORCE_PUSH}",
+        f"git -C {WORKDIR} {SHORT_FORCE}",
+        f"git --git-dir={WORKDIR}/.git {FORCE_PUSH}",
+        f"git -c user.name=x {FORCE_PUSH}",
+        f"git -C {WORKDIR} -c k=v {FORCE_PUSH}",
+        f"git --no-pager {FORCE_PUSH}",
+        f"git -C {WORKDIR} {HARD_RESET}",
+        f"git --work-tree {WORKDIR} {HARD_RESET}",
+        f"git -C {WORKDIR} {CLEAN_FORCE}",
+    ],
+)
+def test_blocks_destructive_git_behind_global_options(command):
+    assert guard(command)[0] == 2
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"git -C {WORKDIR} status",
+        f"git -C {WORKDIR} log --oneline",
+        f"git -C {WORKDIR} diff --stat",
+        "git push origin main",
+        'git commit -m "ordinary message"',
+    ],
+)
+def test_allows_ordinary_git_behind_global_options(command):
+    assert guard(command)[0] == 0
