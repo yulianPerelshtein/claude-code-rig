@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.23]
+
+### Added
+
+- **A leased force-push to an unprotected branch now asks instead of blocking.**
+  The blocklist treated every force-push alike, so tidying a branch before review
+  was impossible and the only way to change a pushed PR was another commit. The
+  exception is narrow, and everything it cannot read from the command text keeps
+  the block: `--force-with-lease` only, since git then refuses when the remote
+  moved; a bare `--force` or `-f` beside it still blocks; exactly one remote and
+  one refspec, so `git push --force-with-lease` with no arguments still blocks
+  because the destination is whatever branch happens to be checked out; and the
+  branch must not be in `protectedBranches`, matched case-insensitively so
+  `Staging` is covered. The skip applies to the force-push rules alone, so a
+  force-push chained with a hard reset is still denied. It prompts rather than
+  allowing silently, because rewriting the wrong branch is not recoverable.
+
 ## [0.0.22]
 
 ### Fixed
