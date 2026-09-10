@@ -3,6 +3,7 @@ import sys
 import json
 import re
 import os
+import shlex
 from pathlib import Path
 
 
@@ -18,10 +19,20 @@ CRED_READ = re.compile(
 )
 
 
-def load_blocklist() -> list[tuple[str, str]] | None:
-    """Load blocked patterns from JSON config.
+# Force-push is blocked outright, with one exception: rewriting a branch nobody
+# else is on, with --force-with-lease, which git refuses if the remote moved.
+# The exception has to be provable from the command text -- a bare --force, a
+# protected branch, or a destination this cannot read all keep the block.
+FORCE_PUSH_ID = "git-force-push"
+DEFAULT_PROTECTED_BRANCHES = ("main", "master", "develop", "dev", "staging", "production", "release")
+SHELL_SEPARATORS = re.compile(r"\|\||&&|[;&|\n]")
+BARE_FORCE_FLAG = re.compile(r"-[A-Za-z]*f[A-Za-z]*")
 
-    Resolves the blocklist relative to this file first (it ships at
+
+def load_policy() -> dict | None:
+    """Load the blocked patterns and the protected-branch list from JSON config.
+
+    Resolves the config relative to this file first (it ships at
     ``core/hooks/blocked-commands.json`` next to the hook tree, which works in
     the plugin cache dir via ``${CLAUDE_PLUGIN_ROOT}``), then falls back to the
     legacy deployed path ``~/.claude/hooks/blocked-commands.json``.
@@ -31,6 +42,12 @@ def load_blocklist() -> list[tuple[str, str]] | None:
     return ``[]``, so a partial sync silently disabled every rule and the hook
     approved a force-push without printing anything at all. A file that parses
     but declares no patterns is a deliberate empty policy and still returns [].
+
+    Returns
+    -------
+    dict or None
+        ``patterns`` as (id, regex, reason) triples, ``id`` being "" when the
+        pattern declares none, and ``protected_branches`` as a lowercased set.
     """
     candidates = [
         Path(__file__).resolve().parent.parent / "blocked-commands.json",
@@ -40,9 +57,61 @@ def load_blocklist() -> list[tuple[str, str]] | None:
         try:
             with open(config_path) as f:
                 data = json.load(f)
-            return [(p["regex"], p["reason"]) for p in data.get("patterns", [])]
+            patterns = [
+                (p.get("id", ""), p["regex"], p["reason"]) for p in data.get("patterns", [])
+            ]
         except Exception:
             continue
+        declared = data.get("protectedBranches") or DEFAULT_PROTECTED_BRANCHES
+        return {"patterns": patterns, "protected_branches": {b.lower() for b in declared}}
+    return None
+
+
+def force_push_exception(command: str, protected: set[str]) -> str | None:
+    """The branch a force-push may rewrite, or None to keep the block.
+
+    Parameters
+    ----------
+    command : str
+        The whole Bash command line, which may chain several commands.
+    protected : set[str]
+        Lowercased branch names the exception never applies to.
+
+    Returns
+    -------
+    str or None
+        The branch name when the command pushes with ``--force-with-lease`` to
+        one explicitly named, unprotected branch. None otherwise, including
+        every case this cannot read: no lease, a bare ``--force`` beside it, an
+        unnamed destination, or a segment shlex refuses to split.
+    """
+    for segment in SHELL_SEPARATORS.split(command):
+        try:
+            tokens = shlex.split(segment)
+        except ValueError:
+            continue
+        if "push" not in tokens:
+            continue
+        push_at = tokens.index("push")
+        if "git" not in tokens[:push_at]:
+            continue
+        if not any(t.split("=", 1)[0] == "--force-with-lease" for t in tokens):
+            continue
+        # A bare force beside the lease wins in git, so it wins here too.
+        if any(t == "--force" or BARE_FORCE_FLAG.fullmatch(t) for t in tokens):
+            return None
+        operands = [t for t in tokens[push_at + 1 :] if not t.startswith("-")]
+        # Exactly a remote and a refspec. Anything else and the destination is
+        # the upstream of whatever branch is checked out, which is not readable
+        # from the command text.
+        if len(operands) != 2:
+            return None
+        branch = operands[1].lstrip("+").split(":")[-1]
+        if branch.startswith("refs/heads/"):
+            branch = branch[len("refs/heads/") :]
+        if not branch or branch.lower() in protected:
+            return None
+        return branch
     return None
 
 
@@ -79,21 +148,36 @@ def main() -> None:
         command = data.get("tool_input", {}).get("command", "")
         # Destructive patterns are a hard block FIRST — even on /mnt paths,
         # `rm -rf /mnt/c/...` must be denied, not merely confirmed.
-        blocklist = load_blocklist()
-        if blocklist is None:
+        policy = load_policy()
+        if policy is None:
             ask(
                 "GUARDRAIL NOT LOADED: blocked-commands.json could not be read, "
                 "so NO destructive-command rule is in force right now. This is "
                 "usually a partial sync — run install/sync-rig.sh. Confirm only "
                 f"if you have checked this command yourself.\nCommand: {command[:200]}"
             )
-        for pattern, reason in blocklist:
+        exempt_branch = force_push_exception(command, policy["protected_branches"])
+        for pattern_id, pattern, reason in policy["patterns"]:
+            # The exception qualifies the force-push rules only. Every other rule
+            # still hard-blocks, so a force-push chained with a recursive delete
+            # is denied, not merely confirmed.
+            if pattern_id == FORCE_PUSH_ID and exempt_branch:
+                continue
             if re.search(pattern, command, re.IGNORECASE):
                 print(
                     f"GUARDRAIL BLOCKED: {reason}\nCommand was: {command[:200]}",
                     file=sys.stderr,
                 )
                 sys.exit(2)
+        # Rewriting an unshared branch is legitimate; rewriting the wrong one is
+        # not recoverable. Confirm rather than allow silently.
+        if exempt_branch:
+            ask(
+                f"Force-push rewrites the history of '{exempt_branch}' on the remote. "
+                "--force-with-lease makes git refuse if anyone else pushed, and the "
+                "branch is not protected, so this is allowed with your confirmation. "
+                f"Confirm only if the branch is yours.\nCommand: {command[:200]}"
+            )
         # Credential-file read: prompt (see CRED_READ note above).
         if CRED_READ.search(command):
             ask(

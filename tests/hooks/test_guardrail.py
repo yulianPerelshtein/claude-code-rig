@@ -163,3 +163,59 @@ def test_valid_but_empty_blocklist_is_a_deliberate_policy(tmp_path):
     hook = _isolated_hook(tmp_path, '{"patterns": []}')
     code, out = _run_isolated(hook, tmp_path, f"git {FORCE_PUSH}")
     assert (code, out.strip()) == (0, "")
+
+
+# --- force-push exception for feature branches -------------------------------
+# Rewriting a branch only you are on is routine, and the blanket block made it
+# impossible to tidy a PR before review. The exception is narrow on purpose:
+# --force-with-lease only, one named unprotected branch only, and every case the
+# hook cannot read from the command text keeps the block.
+
+LEASE = "push --force-with-lease"
+
+
+def decide(command: str) -> str:
+    """'block' (exit 2), 'ask' (exit 0 with a decision), or 'allow' (exit 0, silent)."""
+    code, out = guard(command)
+    if code == 2:
+        return "block"
+    if not out.strip():
+        return "allow"
+    return json.loads(out)["hookSpecificOutput"]["permissionDecision"]
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"git {LEASE} origin my-branch",
+        f"git {LEASE} origin feature/thing",
+        f"git -C {WORKDIR} {LEASE} origin my-branch",
+        f"git {LEASE} origin HEAD:my-branch",
+        f"git {LEASE}=origin/my-branch origin my-branch",
+        f"cd {WORKDIR} && git {LEASE} origin my-branch",
+        "git push origin my-branch --force-with-lease",
+    ],
+)
+def test_asks_for_lease_push_to_a_feature_branch(command):
+    assert decide(command) == "ask"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"git {LEASE} origin main",
+        f"git {LEASE} origin Staging",
+        f"git {LEASE} origin HEAD:master",
+        f"git {LEASE}",
+        f"git {LEASE} origin",
+        f"git {LEASE} --force origin my-branch",
+        "git push -f --force-with-lease origin my-branch",
+    ],
+)
+def test_still_blocks_every_other_force_push(command):
+    assert decide(command) == "block"
+
+
+def test_exception_does_not_pardon_another_rule_in_the_same_command():
+    """The exception skips the force-push rule, not the rest of the blocklist."""
+    assert decide(f"git {LEASE} origin my-branch && git {HARD_RESET} HEAD~1") == "block"
