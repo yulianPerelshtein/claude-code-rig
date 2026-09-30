@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.24]
+
+### Fixed
+
+- **The tool-failure hook never saw an error.** It read `tool_error`; the
+  `PostToolUseFailure` payload carries `error`. Every logged failure recorded an
+  empty string and no text-matching guidance branch could fire. A fixture
+  captured off a live session now pins the shape, and the capture script records
+  it. The real text also showed a second miss: a missing file reads "File does not
+  exist", which the file-not-found branch did not match.
+- **The backup credential gate missed hyphenated `sk-` keys.** `sk-ant-…` and
+  `sk-proj-…` break the `[A-Za-z0-9]{16,}` run at the second hyphen, so a live key
+  was archived while the script printed success. A test feeds the real `KEY_RE`
+  through `grep` the way the script does.
+
+### Added
+
+- **The guardrail now covers the Read tool.** Reading a credential file or the
+  Windows mount prompted for `cat .env` but not for the Read tool, one tool
+  choice away. Both now ask, on the same file pattern as the Bash rule.
+- **Merging a pull request is blocked; `gh stack` pushes ask.** `gh pr merge` and
+  `gh stack merge` hard-block. `gh stack push`, `sync` and `submit` force-push
+  every layer with a lease or open PRs, which the git rules cannot see, so they
+  prompt. Prompts come from a new `confirm` list in `blocked-commands.json`,
+  checked only after every hard block.
+
+### Changed
+
+- **serena and Playwright MCP are opt-in.** The plugin started both on every
+  session. serena's LSP reference lists read as complete on codebases that
+  dispatch through registries or `getattr`, and Playwright needs a browser the
+  machine may not have. The domain docs carry pinned `claude mcp add` commands.
+
 ## [0.0.23]
 
 ### Added
