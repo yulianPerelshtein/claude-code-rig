@@ -45,7 +45,7 @@ prune_args=()
 for e in "${EXCLUDES[@]}"; do
     prune_args+=(-path "${CLAUDE_DIR}/${e#./}" -prune -o)
 done
-KEY_RE='ABSK[A-Za-z0-9+/=]{8,}|AKIA[0-9A-Z]{16}|\bsk-[A-Za-z0-9]{16,}|\bghp_[A-Za-z0-9]{20,}|\bxai-[A-Za-z0-9]{16,}|\bglpat-[A-Za-z0-9_-]{16,}|\bgsk_[A-Za-z0-9]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+KEY_RE='ABSK[A-Za-z0-9+/=]{8,}|AKIA[0-9A-Z]{16}|\bsk-[A-Za-z0-9_-]{16,}|\bghp_[A-Za-z0-9]{20,}|\bxai-[A-Za-z0-9]{16,}|\bglpat-[A-Za-z0-9_-]{16,}|\bgsk_[A-Za-z0-9]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'
 hits=""
 while IFS= read -r -d '' f; do
     if LC_ALL=C grep -aEl "${KEY_RE}" "${f}" >/dev/null 2>&1; then
