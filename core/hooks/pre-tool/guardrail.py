@@ -30,7 +30,9 @@ CRED_PATH = re.compile(CRED_FILE, re.IGNORECASE)
 # The exception has to be provable from the command text -- a bare --force, a
 # protected branch, or a destination this cannot read all keep the block.
 FORCE_PUSH_ID = "git-force-push"
-DEFAULT_PROTECTED_BRANCHES = ("main", "master", "develop", "dev", "staging", "production", "release")
+DEFAULT_PROTECTED_BRANCHES = (
+    "main", "master", "develop", "dev", "staging", "production", "release"
+)
 SHELL_SEPARATORS = re.compile(r"\|\||&&|[;&|\n]")
 BARE_FORCE_FLAG = re.compile(r"-[A-Za-z]*f[A-Za-z]*")
 
@@ -65,7 +67,8 @@ def load_policy() -> dict | None:
             with open(config_path) as f:
                 data = json.load(f)
             patterns = [
-                (p.get("id", ""), p["regex"], p["reason"]) for p in data.get("patterns", [])
+                (p.get("id", ""), p["regex"], p["reason"])
+                for p in data.get("patterns", [])
             ]
             confirm = [(p["regex"], p["reason"]) for p in data.get("confirm", [])]
         except Exception:
@@ -170,6 +173,75 @@ def guard_read(path: str) -> None:
         )
 
 
+def guard_bash(command: str) -> None:
+    """Block a destructive command (exit 2), or prompt for a risky one."""
+    # Destructive patterns are a hard block FIRST — even on /mnt paths,
+    # `rm -rf /mnt/c/...` must be denied, not merely confirmed.
+    policy = load_policy()
+    if policy is None:
+        ask(
+            "GUARDRAIL NOT LOADED: blocked-commands.json could not be read, "
+            "so NO destructive-command rule is in force right now. This is "
+            "usually a partial sync — run install/sync-rig.sh. Confirm only "
+            f"if you have checked this command yourself.\nCommand: {command[:200]}"
+        )
+    exempt_branch = force_push_exception(command, policy["protected_branches"])
+    for pattern_id, pattern, reason in policy["patterns"]:
+        # The exception qualifies the force-push rules only. Every other rule
+        # still hard-blocks, so a force-push chained with a recursive delete
+        # is denied, not merely confirmed.
+        if pattern_id == FORCE_PUSH_ID and exempt_branch:
+            continue
+        if re.search(pattern, command, re.IGNORECASE):
+            print(
+                f"GUARDRAIL BLOCKED: {reason}\nCommand was: {command[:200]}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+    # Rewriting an unshared branch is legitimate; rewriting the wrong one is
+    # not recoverable. Confirm rather than allow silently.
+    if exempt_branch:
+        ask(
+            f"Force-push rewrites the history of '{exempt_branch}' on the remote. "
+            "--force-with-lease makes git refuse if anyone else pushed, and the "
+            "branch is not protected, so this is allowed with your confirmation. "
+            f"Confirm only if the branch is yours.\nCommand: {command[:200]}"
+        )
+    # Checked only after every hard block, so a chained destructive command
+    # stays denied rather than merely confirmed.
+    confirm_outward(command, policy["confirm"])
+    # Credential-file read: prompt (see CRED_READ note above).
+    if CRED_READ.search(command):
+        ask(
+            "This reads a credential file (.env/secret/key/...), which can "
+            "expose secrets in the transcript. Prefer loading via app "
+            f"config; confirm only if intended.\nCommand: {command[:200]}"
+        )
+    # WSL OS-isolation: the Windows mount is cross-OS and slow (9p). Working
+    # there is almost always a mistake, but a deliberate artifact handoff to
+    # a Windows-native tool is legitimate — so PROMPT for confirmation rather
+    # than hard-blocking.
+    if "/mnt/c/" in command:
+        ask(
+            "WSL OS-isolation: this touches the Windows mount (/mnt/c/), "
+            "which is slow (9p) and outside the Linux filesystem. Confirm "
+            "only if this is a deliberate artifact handoff to a "
+            f"Windows-native tool.\nCommand: {command[:200]}"
+        )
+
+
+def guard_write(path: str) -> None:
+    """Prompt before Write or Edit touches the Windows mount."""
+    # WSL OS-isolation: prompt (don't hard-block) on writes to the Windows
+    # mount — a finished-artifact handoff is the legitimate case.
+    if "/mnt/c/" in path:
+        ask(
+            f"WSL OS-isolation: writing to the Windows mount ({path}). "
+            "Confirm only if this is a deliberate artifact handoff to a "
+            "Windows-native tool."
+        )
+
+
 def main() -> None:
     try:
         raw = sys.stdin.read()
@@ -178,79 +250,13 @@ def main() -> None:
         sys.exit(0)
 
     tool = data.get("tool_name", "")
-
+    tool_input = data.get("tool_input", {})
     if tool == "Bash":
-        command = data.get("tool_input", {}).get("command", "")
-        # Destructive patterns are a hard block FIRST — even on /mnt paths,
-        # `rm -rf /mnt/c/...` must be denied, not merely confirmed.
-        policy = load_policy()
-        if policy is None:
-            ask(
-                "GUARDRAIL NOT LOADED: blocked-commands.json could not be read, "
-                "so NO destructive-command rule is in force right now. This is "
-                "usually a partial sync — run install/sync-rig.sh. Confirm only "
-                f"if you have checked this command yourself.\nCommand: {command[:200]}"
-            )
-        exempt_branch = force_push_exception(command, policy["protected_branches"])
-        for pattern_id, pattern, reason in policy["patterns"]:
-            # The exception qualifies the force-push rules only. Every other rule
-            # still hard-blocks, so a force-push chained with a recursive delete
-            # is denied, not merely confirmed.
-            if pattern_id == FORCE_PUSH_ID and exempt_branch:
-                continue
-            if re.search(pattern, command, re.IGNORECASE):
-                print(
-                    f"GUARDRAIL BLOCKED: {reason}\nCommand was: {command[:200]}",
-                    file=sys.stderr,
-                )
-                sys.exit(2)
-        # Rewriting an unshared branch is legitimate; rewriting the wrong one is
-        # not recoverable. Confirm rather than allow silently.
-        if exempt_branch:
-            ask(
-                f"Force-push rewrites the history of '{exempt_branch}' on the remote. "
-                "--force-with-lease makes git refuse if anyone else pushed, and the "
-                "branch is not protected, so this is allowed with your confirmation. "
-                f"Confirm only if the branch is yours.\nCommand: {command[:200]}"
-            )
-        # Checked only after every hard block, so a chained destructive command
-        # stays denied rather than merely confirmed.
-        confirm_outward(command, policy["confirm"])
-        # Credential-file read: prompt (see CRED_READ note above).
-        if CRED_READ.search(command):
-            ask(
-                "This reads a credential file (.env/secret/key/...), which can "
-                "expose secrets in the transcript. Prefer loading via app "
-                f"config; confirm only if intended.\nCommand: {command[:200]}"
-            )
-        # WSL OS-isolation: the Windows mount is cross-OS and slow (9p). Working
-        # there is almost always a mistake, but a deliberate artifact handoff to
-        # a Windows-native tool is legitimate — so PROMPT for confirmation rather
-        # than hard-blocking.
-        if "/mnt/c/" in command:
-            ask(
-                "WSL OS-isolation: this touches the Windows mount (/mnt/c/), "
-                "which is slow (9p) and outside the Linux filesystem. Confirm "
-                "only if this is a deliberate artifact handoff to a "
-                f"Windows-native tool.\nCommand: {command[:200]}"
-            )
-
+        guard_bash(tool_input.get("command", ""))
     elif tool in ("Write", "Edit"):
-        path = (
-            data.get("tool_input", {}).get("path", "")
-            or data.get("tool_input", {}).get("file_path", "")
-        )
-        # WSL OS-isolation: prompt (don't hard-block) on writes to the Windows
-        # mount — a finished-artifact handoff is the legitimate case.
-        if "/mnt/c/" in path:
-            ask(
-                f"WSL OS-isolation: writing to the Windows mount ({path}). "
-                "Confirm only if this is a deliberate artifact handoff to a "
-                "Windows-native tool."
-            )
-
+        guard_write(tool_input.get("path", "") or tool_input.get("file_path", ""))
     elif tool == "Read":
-        guard_read(data.get("tool_input", {}).get("file_path", ""))
+        guard_read(tool_input.get("file_path", ""))
 
     sys.exit(0)
 
