@@ -6,21 +6,21 @@ deterministic. It drives the browser through the **accessibility tree**, not
 pixels/screenshots, so actions are structured and reproducible rather than
 vision-guessed.
 
-> Install-deferred user action. The server is already declared in `.mcp.json`;
-> it lights up once `npx`/Node and the browser are present on the machine.
+> Opt-in. The plugin no longer starts it on every session; add it on a machine
+> that has a browser, with the pinned command below.
 
-## Declared in `.mcp.json`
+## Opt in
 
-```json
-"playwright": {
-  "command": "npx",
-  "args": ["-y", "@playwright/mcp@latest"]
-}
+```bash
+npx playwright install firefox        # bundled build, no sudo
+claude mcp add playwright -s user -- npx -y @playwright/mcp@0.0.76 --browser firefox
 ```
 
-`npx -y` fetches the package on first use. The first run may also need a browser
-binary — install it with `npx playwright install chromium` if the server reports
-a missing browser.
+`--browser` accepts `chrome`, `firefox`, `webkit` or `msedge`. Without it the
+server uses the `chrome` channel and fails with "Chromium distribution 'chrome'
+is not found" unless Google Chrome itself is installed (`npx playwright install
+chrome`, which needs sudo); the bundled chromium does not satisfy that channel.
+Remove it with `claude mcp remove playwright -s user`.
 
 ## What you get
 
@@ -62,7 +62,6 @@ unless Playwright MCP demonstrably fails on the page.
 
 ## See also
 
-- `.mcp.json` — the server declaration.
 - `domains/context-engineering/native-context-levers.md` — native-context-first stance.
 - `domains/context-engineering/native-context-levers.md` — `ENABLE_TOOL_SEARCH` value table + the other #27 levers.
 - `core/hooks/post-tool/mcp_trimmer.py` — trims oversized MCP tool output.

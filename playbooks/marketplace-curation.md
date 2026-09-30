@@ -11,11 +11,13 @@ survey: `SOTA_REFRESH.md §4.6`.
 
 ## Already wired by the rig (don't re-add)
 
-These are declared in `.mcp.json` / `manifests/marketplace.yaml` — installed on
-the normal path, so they're not "new" picks:
+These are listed in `manifests/marketplace.yaml` or documented with a pinned
+opt-in command, so they're not "new" picks:
 
-- **serena** (MCP) — semantic LSP code search/edit (`.mcp.json`, `domains/memory/serena.md`).
-- **Playwright MCP** — default browser automation (`.mcp.json`).
+- **serena** (MCP, opt-in per project) — semantic LSP code search/edit
+  (`domains/memory/serena.md`).
+- **Playwright MCP** (opt-in) — default browser automation
+  (`domains/scraping/playwright-mcp.md`).
 - **skill-creator**, **playwright**, **typescript-lsp**, **frontend-design**
   (`@claude-plugins-official`, in `marketplace.yaml#plugins`).
 

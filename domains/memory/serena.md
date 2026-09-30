@@ -7,24 +7,32 @@ symbol-level edits — instead of brute-force file reads and text greps. It also
 provides a lightweight project-memory store. Adopted as the Tier-1 retrieval
 lever (`SOTA_REFRESH.md §7`); mature, local, no required egress.
 
-> Install-deferred user action. serena is already declared in `.mcp.json`; it
-> lights up once `uvx` (from `uv`) can fetch it on the target machine.
+> Opt-in per project. The plugin no longer starts serena on every session; add it
+> only where it has proven useful, with the pinned command below.
 
-## Declared in `.mcp.json`
+## Opt in per project
 
-```json
-"serena": {
-  "command": "uvx",
-  "args": [
-    "--from", "git+https://github.com/oraios/serena",
-    "serena", "start-mcp-server",
-    "--context", "ide-assistant"
-  ]
-}
+Run from the project root. `-s local` keeps the entry private to this project, in
+`~/.claude.json`, rather than writing a `.mcp.json` into the repo:
+
+```bash
+claude mcp add serena -s local -- uvx --from \
+  git+https://github.com/oraios/serena@dd7eb6d72ae179aa940e50cd6276ec5646f306f8 \
+  serena start-mcp-server --context ide-assistant
 ```
 
 The `ide-assistant` context tunes serena for use alongside an agent that already
 has file editing — it leans on semantic navigation and avoids redundant tools.
+Remove it with `claude mcp remove serena -s local`.
+
+## When it misleads
+
+On a codebase that dispatches through registries, decorators or `getattr`, a
+reference list from the language server is incomplete but reads as complete: it
+can return only test callers for a function that production reaches by a string
+key. Pyright also does not implement `textDocument/implementation`, so
+`find_implementations` fails on Python. On such a codebase prefer a written
+dispatch table plus `rg`, and do not add serena.
 
 ## Why it beats read+grep
 
@@ -76,7 +84,6 @@ pairing covers it without an egress-by-default knowledge graph.
 
 ## See also
 
-- `.mcp.json` — the server declaration.
 - `domains/context-engineering/native-context-levers.md` — native `MEMORY.md` stance.
 - `domains/context-engineering/native-context-levers.md` — `ENABLE_TOOL_SEARCH` value table + the other #27 levers.
 - `skills/custom/repo-map/SKILL.md` — the breadth-first orientation map that complements serena's depth-first symbol lookup (#28).
