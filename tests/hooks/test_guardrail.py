@@ -219,3 +219,92 @@ def test_still_blocks_every_other_force_push(command):
 def test_exception_does_not_pardon_another_rule_in_the_same_command():
     """The exception skips the force-push rule, not the rest of the blocklist."""
     assert decide(f"git {LEASE} origin my-branch && git {HARD_RESET} HEAD~1") == "block"
+
+
+# --- the Read tool -----------------------------------------------------------
+# The credential and Windows-mount prompts covered `cat .env` but not the Read
+# tool, so the same file was one tool choice away from the transcript.
+
+
+def read_decision(file_path: str) -> str:
+    """'ask' or 'allow' for a Read of `file_path`."""
+    payload = {"tool_name": "Read", "tool_input": {"file_path": file_path}}
+    proc = subprocess.run(
+        [sys.executable, str(HOOK)],
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    if not proc.stdout.strip():
+        return "allow"
+    return json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecision"]
+
+
+@pytest.mark.parametrize(
+    "file_path",
+    [
+        "/home/dev/proj/.env",
+        "/home/dev/proj/.env.local",
+        "/home/dev/.ssh/id_rsa",
+        "/home/dev/.aws/credentials",
+        "/home/dev/.claude/.credentials.json",
+        "/home/dev/proj/certs/server.pem",
+        "/mnt/c/Users/dev/notes.txt",
+    ],
+)
+def test_read_of_a_credential_or_windows_path_asks(file_path):
+    assert read_decision(file_path) == "ask"
+
+
+@pytest.mark.parametrize(
+    "file_path",
+    [
+        "/home/dev/proj/README.md",
+        "/home/dev/proj/.venv/lib/python3.12/site.py",
+        "/home/dev/proj/src/keyboard.py",
+        "/home/dev/proj/environment.yml",
+    ],
+)
+def test_read_of_an_ordinary_file_is_silent(file_path):
+    assert read_decision(file_path) == "allow"
+
+
+# --- stacked-PR commands -----------------------------------------------------
+# gh stack wraps pushes and merges the git rules cannot see: push and sync
+# force-push every layer with a lease, submit opens PRs, merge merges them.
+
+STACK = "gh " + "stack"
+MERGE = "mer" + "ge"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        f"{STACK} {MERGE}",
+        f"{STACK} {MERGE} 42 --yes",
+        f"gh pr {MERGE} 12 --squash",
+        f"cd {WORKDIR} && gh pr {MERGE} 12",
+    ],
+)
+def test_blocks_merging_pull_requests(command):
+    assert decide(command) == "block"
+
+
+@pytest.mark.parametrize(
+    "command", [f"{STACK} push", f"{STACK} sync --prune", f"{STACK} submit --auto"]
+)
+def test_asks_before_stack_pushes(command):
+    assert decide(command) == "ask"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [f"{STACK} view", f"{STACK} rebase", "gh pr view 12", "gh pr list --base main"],
+)
+def test_allows_local_and_read_only_stack_commands(command):
+    assert decide(command) == "allow"
+
+
+def test_confirm_list_does_not_pardon_a_blocked_command():
+    assert decide(f"{STACK} push && git {HARD_RESET} HEAD~1") == "block"
