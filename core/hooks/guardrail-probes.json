@@ -100,6 +100,14 @@
     {
       "command": "git -C /tmp/somerepo clean -fd",
       "covers": "git\\s+(?:-[Cc]\\s+\\S+\\s+|--(?:git-dir|work-tree|namespace|exec-path)(?:=\\S+|\\s+\\S+)\\s+|--(?:no-pager|paginate|bare|literal-pathspecs|no-replace-objects)\\s+|-p\\s+)*clean\\s+-[a-z]*f"
+    },
+    {
+      "command": "gh pr merge 12 --squash",
+      "covers": "\\bgh\\s+(?:stack|pr)\\s+merge\\b"
+    },
+    {
+      "command": "gh stack merge --yes",
+      "covers": "\\bgh\\s+(?:stack|pr)\\s+merge\\b"
     }
   ],
   "allowed": [
@@ -129,6 +137,9 @@
     },
     {
       "command": "git -C /tmp/somerepo log --oneline"
+    },
+    {
+      "command": "gh pr view 12 --comments"
     }
   ]
 }

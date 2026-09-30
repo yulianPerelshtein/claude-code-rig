@@ -5,18 +5,24 @@ import re
 import os
 import shlex
 from pathlib import Path
+from typing import NoReturn
 
 
 # Reading a credential file can leak secrets into the transcript, but is often
 # legitimate on a dev box — so prompt, don't hard-block. Read verbs only; stops
 # at the first pipe/;/& so it never binds across commands. Destructive ops still
-# hard-block first (rm -rf .env is denied, not asked).
+# hard-block first (rm -rf .env is denied, not asked). The Read tool gets the
+# same prompt on the same file pattern.
+CRED_FILE = (
+    r"(\.(env|secret|secrets|pem|key|p12|pfx)\b"
+    r"|credentials\b|id_rsa\b|id_ed25519\b)"
+)
 CRED_READ = re.compile(
     r"\b(cat|tac|less|more|head|tail|bat|nl|xxd|od|strings|hexdump|grep|rg|awk|sed|cut|tee)\b"
-    r"[^|;&]*"
-    r"(\.(env|secret|secrets|pem|key|p12|pfx)\b|credentials\b|id_rsa\b|id_ed25519\b)",
+    r"[^|;&]*" + CRED_FILE,
     re.IGNORECASE,
 )
+CRED_PATH = re.compile(CRED_FILE, re.IGNORECASE)
 
 
 # Force-push is blocked outright, with one exception: rewriting a branch nobody
@@ -47,7 +53,8 @@ def load_policy() -> dict | None:
     -------
     dict or None
         ``patterns`` as (id, regex, reason) triples, ``id`` being "" when the
-        pattern declares none, and ``protected_branches`` as a lowercased set.
+        pattern declares none, ``confirm`` as (regex, reason) pairs that prompt
+        instead of blocking, and ``protected_branches`` as a lowercased set.
     """
     candidates = [
         Path(__file__).resolve().parent.parent / "blocked-commands.json",
@@ -60,10 +67,15 @@ def load_policy() -> dict | None:
             patterns = [
                 (p.get("id", ""), p["regex"], p["reason"]) for p in data.get("patterns", [])
             ]
+            confirm = [(p["regex"], p["reason"]) for p in data.get("confirm", [])]
         except Exception:
             continue
         declared = data.get("protectedBranches") or DEFAULT_PROTECTED_BRANCHES
-        return {"patterns": patterns, "protected_branches": {b.lower() for b in declared}}
+        return {
+            "patterns": patterns,
+            "confirm": confirm,
+            "protected_branches": {b.lower() for b in declared},
+        }
     return None
 
 
@@ -115,7 +127,7 @@ def force_push_exception(command: str, protected: set[str]) -> str | None:
     return None
 
 
-def ask(reason: str) -> None:
+def ask(reason: str) -> NoReturn:
     """Prompt the user to confirm the tool call (PreToolUse 'ask' decision).
 
     Unlike the legacy exit-2 deny path, the JSON decision contract is read only
@@ -133,6 +145,29 @@ def ask(reason: str) -> None:
         )
     )
     sys.exit(0)
+
+
+def confirm_outward(command: str, confirm: list[tuple[str, str]]) -> None:
+    """Prompt when `command` matches a policy ``confirm`` (outward, routine) pattern."""
+    for pattern, reason in confirm:
+        if re.search(pattern, command, re.IGNORECASE):
+            ask(f"{reason}\nCommand: {command[:200]}")
+
+
+def guard_read(path: str) -> None:
+    """Prompt before the Read tool opens a credential file or the Windows mount."""
+    if CRED_PATH.search(path):
+        ask(
+            "This reads a credential file (.env/secret/key/...), which can "
+            "expose secrets in the transcript. Prefer loading via app "
+            f"config; confirm only if intended.\nFile: {path}"
+        )
+    if "/mnt/c/" in path:
+        ask(
+            f"WSL OS-isolation: reading from the Windows mount ({path}), "
+            "which is slow (9p) and outside the Linux filesystem. Confirm "
+            "only if this is deliberate."
+        )
 
 
 def main() -> None:
@@ -178,6 +213,9 @@ def main() -> None:
                 "branch is not protected, so this is allowed with your confirmation. "
                 f"Confirm only if the branch is yours.\nCommand: {command[:200]}"
             )
+        # Checked only after every hard block, so a chained destructive command
+        # stays denied rather than merely confirmed.
+        confirm_outward(command, policy["confirm"])
         # Credential-file read: prompt (see CRED_READ note above).
         if CRED_READ.search(command):
             ask(
@@ -210,6 +248,9 @@ def main() -> None:
                 "Confirm only if this is a deliberate artifact handoff to a "
                 "Windows-native tool."
             )
+
+    elif tool == "Read":
+        guard_read(data.get("tool_input", {}).get("file_path", ""))
 
     sys.exit(0)
 
