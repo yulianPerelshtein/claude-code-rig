@@ -10,7 +10,8 @@ description: >-
 # memory
 
 The rig's coding-memory and code-navigation layer. Read `serena.md` for the
-serena MCP server (the locked Tier-1 retrieval lever, `SOTA_REFRESH.md §7`).
+serena MCP server (the Tier-1 retrieval lever, `SOTA_REFRESH.md §7`): opt-in per
+project, and not for codebases that dispatch through registries or `getattr`.
 
 `seven-layer-architecture.md` is the layering lesson behind all of this — what
 belongs in which store, and why a retrieved snippet must say why it is

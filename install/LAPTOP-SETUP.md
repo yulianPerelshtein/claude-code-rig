@@ -99,9 +99,9 @@ Open a Claude Code session in any project and confirm:
 - [ ] The guardrail blocks a destructive command (e.g. ask it to run
   `rm -rf /tmp/x` — the `PreToolUse` hook denies it)
 - [ ] `/agents` lists `code-reviewer`, `pr-writer`, `refactor`, `test-writer`
-- [ ] `/doctor` shows no fatal plugin errors. The `serena` and `playwright` MCP
-  servers reporting **"binary not found"** is **expected** until you install
-  those servers (optional, opt-in) — not a failure.
+- [ ] `/doctor` shows no fatal plugin errors. The plugin ships no MCP servers;
+  serena and Playwright are opt-in (`domains/memory/serena.md`,
+  `domains/scraping/playwright-mcp.md`).
 
 ### Optional: `rate_limits` probe
 
