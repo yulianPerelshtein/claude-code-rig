@@ -36,7 +36,8 @@ d = os.path.join(os.path.dirname(os.path.abspath(__file__)), "payloads")
 os.makedirs(d, exist_ok=True)
 raw = sys.stdin.read()
 try:
-    name = json.loads(raw).get("tool_name", "unknown")
+    payload = json.loads(raw)
+    name = f'{payload.get("hook_event_name", "unknown")}-{payload.get("tool_name", "unknown")}'
 except Exception:
     name = "unparsed"
 open(os.path.join(d, f"{name}-{time.time_ns()}.json"), "w").write(raw)
@@ -47,6 +48,9 @@ cat > "${WORK}/.claude/settings.json" <<PY
   "hooks": {
     "PostToolUse": [
       {"matcher": "Read|WebFetch", "hooks": [{"type": "command", "command": "python3 ${WORK}/dump.py"}]}
+    ],
+    "PostToolUseFailure": [
+      {"matcher": "Read", "hooks": [{"type": "command", "command": "python3 ${WORK}/dump.py"}]}
     ]
   }
 }
@@ -66,6 +70,13 @@ echo "== Capturing WebFetch =="
 ( cd "${WORK}" && timeout 300 claude -p \
     "Use WebFetch on https://example.com with the prompt 'what is the page title'. Then stop." \
     --allowedTools "WebFetch" >/dev/null 2>&1 )
+
+# A failed Bash call is a poor source: the sandbox blocks it as a permission
+# denial, which fires no PostToolUseFailure. A Read of a missing file does.
+echo "== Capturing a failed Read =="
+( cd "${WORK}" && timeout 300 claude -p \
+    "Use the Read tool on the file missing.txt exactly once. Do not retry. Then stop." \
+    --allowedTools "Read" >/dev/null 2>&1 )
 
 echo "== Sanitising =="
 python3 - "${WORK}" "${FIXTURES}" <<'PY'
@@ -95,16 +106,32 @@ WEBFETCH_RESULT = (
     "reserved for use in illustrative examples.\n"
 )
 
+WANTED = {
+    ("PostToolUse", "Read"),
+    ("PostToolUse", "WebFetch"),
+    ("PostToolUseFailure", "Read"),
+}
 seen = set()
 for path in sorted(glob.glob(os.path.join(work, "payloads", "*.json"))):
     d = json.load(open(path))
     tool = d.get("tool_name")
-    if tool in seen or tool not in ("Read", "WebFetch"):
+    key = (d.get("hook_event_name"), tool)
+    if key in seen or key not in WANTED:
         continue
-    seen.add(tool)
+    seen.add(key)
     for k, v in SUBS.items():
         if k in d:
             d[k] = v
+    if key[0] == "PostToolUseFailure":
+        # The error text is kept as captured; only the machine path is replaced.
+        d["error"] = d.get("error", "").replace(work, "/work/sample")
+        d["tool_input"]["file_path"] = "/work/sample/missing.txt"
+        name = "posttoolusefailure-read.json"
+        with open(os.path.join(fixtures, name), "w") as fh:
+            json.dump(d, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+        print(f"   wrote {name}  top-level keys: {sorted(d)}")
+        continue
     if tool == "Read":
         d["tool_input"]["file_path"] = SAMPLE_PATH
         f = d["tool_response"]["file"]
@@ -121,10 +148,10 @@ for path in sorted(glob.glob(os.path.join(work, "payloads", "*.json"))):
         fh.write("\n")
     print(f"   wrote {name}  tool_response keys: {sorted(d['tool_response'])}")
 
-for tool in ("Read", "WebFetch"):
-    if tool not in seen:
-        print(f"   MISSING: no {tool} payload captured", file=sys.stderr)
-        sys.exit(1)
+for event, tool in sorted(WANTED - seen):
+    print(f"   MISSING: no {event} {tool} payload captured", file=sys.stderr)
+if WANTED - seen:
+    sys.exit(1)
 PY
 rc=$?
 [[ "${rc}" -ne 0 ]] && { echo "capture: incomplete — fixtures NOT fully rebuilt" >&2; exit "${rc}"; }

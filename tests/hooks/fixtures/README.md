@@ -14,6 +14,7 @@ hook that extracted the empty string and had never scanned a byte.
 |---|---|
 | `Read` | `tool_response.file.content` (alongside `filePath`, `numLines`, `startLine`, `totalLines`) |
 | `WebFetch` | `tool_response.result` (alongside `bytes`, `code`, `codeText`, `durationMs`, `url`) |
+| `PostToolUseFailure` (`Read`) | top-level `error` (alongside `is_interrupt`, `duration_ms`); no `tool_response`, no `tool_error` |
 
 Neither has a top-level `content`. `WebFetch.result` is the model's *summary*
 of the page, not the raw bytes — scanning it is still correct, because the

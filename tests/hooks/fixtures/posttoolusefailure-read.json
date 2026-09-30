@@ -1,0 +1,19 @@
+{
+  "cwd": "/work/sample",
+  "duration_ms": 6,
+  "effort": {
+    "level": "xhigh"
+  },
+  "error": "File does not exist. Note: your current working directory is /work/sample.",
+  "hook_event_name": "PostToolUseFailure",
+  "is_interrupt": false,
+  "permission_mode": "default",
+  "prompt_id": "00000000-0000-4000-8000-000000000002",
+  "session_id": "00000000-0000-4000-8000-000000000001",
+  "tool_input": {
+    "file_path": "/work/sample/missing.txt"
+  },
+  "tool_name": "Read",
+  "tool_use_id": "toolu_00000000000000000000000000",
+  "transcript_path": "/home/dev/.claude/projects/-work-sample/session.jsonl"
+}

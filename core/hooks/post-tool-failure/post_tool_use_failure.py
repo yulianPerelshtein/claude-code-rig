@@ -59,7 +59,11 @@ def get_failure_guidance(  # noqa: C901, PLR0911
                 "Read the file first to see its current contents, then retry "
                 "with the exact string from the file."
             )
-        if "not found" in error_lower or "no such file" in error_lower:
+        if (
+            "not found" in error_lower
+            or "no such file" in error_lower
+            or "does not exist" in error_lower
+        ):
             return (
                 f"File not found: {file_path}. "
                 "Use Glob to search for the correct path before retrying."
@@ -98,7 +102,7 @@ def main() -> None:
         tool_name = data.get("tool_name", "")
         tool_input = data.get("tool_input", {})
         session_id = data.get("session_id", "unknown")
-        error = data.get("tool_error", "")
+        error = data.get("error", "")
 
         # Logging — append one JSON object per line (JSONL). Append-only keeps
         # this O(1) per failure instead of reading and rewriting the whole log.
