@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.25]
+
+### Added
+
+- **`codex-snapshot-review`: an outside review by Codex, pinned and triaged.**
+  A script pins the change as two refs under `refs/review/<name>/` and a
+  detached worktree, from a pushed ref or from uncommitted work. The
+  uncommitted mode builds its tree in a temporary index, so the user's index
+  never moves; the worktree is added with git hooks off, so a hook that copies
+  `.env` into new worktrees cannot hand it to the reviewer. Codex runs with
+  `-s read-only` and answers in JSON against a findings schema that makes it
+  name the entry point that reaches each finding and the design document it
+  checked; a BLOCKER that is not reachable is flagged. The same script turns
+  the JSON into a triage table, and `triage.md` says how each finding is
+  reproduced before it reaches the user. It wraps no existing review skill.
+
 ## [0.0.24]
 
 ### Fixed
