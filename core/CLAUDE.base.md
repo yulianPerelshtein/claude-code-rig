@@ -60,6 +60,8 @@ mechanics live in the `paths:`-scoped domains.
   second line; it is a default to apply judgment to, not a hard cap.
 - Docstrings state the contract — what it takes, returns, and assumes. The code
   is already the algorithm; do not restate it in prose.
+- Add a test only for a defect no other test catches, and extend an existing
+  test before copying one. Details: `domains/testing-tdd/test-economy.md`.
 - NEVER put names (of people or roles) or dates in anything that ships with the
   code — source, comments, docstrings, commit messages, PR bodies, migration
   text. Name a decision by its content ("the classification decision matrix"),
