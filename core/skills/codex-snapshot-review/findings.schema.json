@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshot review report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "summary", "findings", "checked_and_sound", "not_checked"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["mergeable", "mergeable-after-fixes", "not-mergeable"]
+    },
+    "summary": {
+      "type": "string",
+      "description": "One paragraph: what the change does and whether it should ship."
+    },
+    "findings": {
+      "type": "array",
+      "description": "Most severe first. One finding per root cause.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "file",
+          "line",
+          "claim",
+          "failure_scenario",
+          "reach",
+          "reachable_from",
+          "why_not_by_design",
+          "evidence",
+          "suggested_test",
+          "fix"
+        ],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["BLOCKER", "SHOULD-FIX", "NIT", "QUESTION"],
+            "description": "BLOCKER only when reach is reachable."
+          },
+          "file": {
+            "type": "string",
+            "description": "Repository-relative path, or 'PR body' for a claim outside the code."
+          },
+          "line": {
+            "type": ["integer", "null"],
+            "description": "Line in the snapshot head; null when the finding has no line."
+          },
+          "claim": {
+            "type": "string",
+            "description": "One sentence: what is wrong."
+          },
+          "failure_scenario": {
+            "type": "string",
+            "description": "Concrete input -> wrong output or crash."
+          },
+          "reach": {
+            "type": "string",
+            "enum": ["reachable", "latent", "unknown"],
+            "description": "reachable: a production entry point reaches it today. latent: it needs an input, route or data that does not exist today. unknown: not decided."
+          },
+          "reachable_from": {
+            "type": "string",
+            "description": "The production entry point and the call path to the line; for latent, what is missing; for unknown, what you searched."
+          },
+          "why_not_by_design": {
+            "type": "string",
+            "description": "The rules file, manifest, plan, decision or test you checked, and why it does not make this behaviour intended."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "The code, the command you ran and its output, or the input that breaks it."
+          },
+          "suggested_test": {
+            "type": "string",
+            "description": "The smallest test that fails today and passes after the fix."
+          },
+          "fix": {
+            "type": "string",
+            "description": "The smallest change that fixes it."
+          }
+        }
+      }
+    },
+    "checked_and_sound": {
+      "type": "array",
+      "description": "What you checked and found correct, one short item each.",
+      "items": {"type": "string"}
+    },
+    "not_checked": {
+      "type": "array",
+      "description": "What you could not verify, and why.",
+      "items": {"type": "string"}
+    }
+  }
+}
