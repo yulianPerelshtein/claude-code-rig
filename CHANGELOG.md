@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.26]
+
+### Added
+
+- **`testing-tdd`: which tests to write.** A new page, `test-economy.md`, says
+  to add a test only for a defect no other test catches. List each planned test
+  with what only it catches; extend an existing table or parametrize an
+  existing test before copying one; keep a named case where a loop over a set
+  cannot see a missing member; keep new test patterns and repo-wide guards out
+  of feature PRs; run one-off proofs outside the suite. The skill now also
+  loads for `*.test.*` and `*.spec.*` files, and its description covers any
+  language. One Layer 1 line carries the rule into planning, before a test file
+  is opened.
+
 ## [0.0.25]
 
 ### Added
