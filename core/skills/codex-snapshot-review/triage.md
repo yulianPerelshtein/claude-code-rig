@@ -10,7 +10,9 @@ not as a defect.
    checkout (it may have moved on).
 2. **Reproduce.** Run the reviewer's evidence command, or write a probe in the
    session scratchpad that imports the snapshot's code. Never write into the
-   snapshot or the user's checkout.
+   snapshot or the user's checkout. The read-only sandbox refuses test temp
+   and cache directories, so the reviewer often cannot run the suites: run the
+   ones the change touches yourself, on head and on base.
 3. **Check reach yourself.** Follow `reachable_from` to a real entry point, or
    search for one. Missing routes, writers or data make it latent. Where the
    question is "does this input exist", count it on real data when you can, and
