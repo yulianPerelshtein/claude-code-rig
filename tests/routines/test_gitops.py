@@ -35,11 +35,20 @@ def test_default_branch_ignores_current_feature_branch(git_repo):
     assert default_branch(git_repo) == "main"
 
 
-def test_worktree_created_on_feature_branch(git_repo):
+def test_worktree_created_on_feature_branch(git_repo, tmp_path_factory):
+    """A new feature-branch worktree, added without running the repo's git hooks."""
+    hooks = tmp_path_factory.mktemp("hooks")
+    (hooks / "post-checkout").write_text("#!/bin/sh\ntouch seeded-by-hook\n")
+    (hooks / "post-checkout").chmod(0o755)
+    subprocess.run(
+        ["git", "-C", str(git_repo), "config", "core.hooksPath", str(hooks)],
+        check=True,
+    )
     branch = "routine/weekly-retro-2026-06-21"
     wt = create_worktree(git_repo, branch)
     try:
         assert wt.exists()
+        assert not (wt / "seeded-by-hook").exists()
         head = subprocess.run(
             ["git", "-C", str(wt), "rev-parse", "--abbrev-ref", "HEAD"],
             capture_output=True,
