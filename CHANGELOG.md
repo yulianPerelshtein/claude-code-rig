@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.27]
+
+### Fixed
+
+- **The type-check hook stalled for 30 s on files outside the session's
+  directory, then failed.** It ran `dmypy` from wherever the session stood, so
+  editing a file in a git worktree made the main checkout's daemon re-analyse a
+  second copy of the codebase, and the uncaught `TimeoutExpired` ended the hook
+  with a traceback after the full wait. The daemon now runs from the edited
+  file's own work tree, one per tree; its status file lives in
+  `~/.cache/claude-code-rig/dmypy/` instead of being dropped as `.dmypy.json`
+  into the current directory; files outside any git repo are skipped; and a
+  step past its cap (10 s for ruff, 15 s for dmypy) ends the hook quietly.
+  Measured on a worktree file: 2.1 s cold, 0.2 s warm.
+
 ## [0.0.26]
 
 ### Added
