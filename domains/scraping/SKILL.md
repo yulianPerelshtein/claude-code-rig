@@ -1,5 +1,6 @@
 ---
 name: scraping
+disable-model-invocation: true
 description: >-
   Browser automation and web scraping for agents — the official Playwright MCP
   as the default driver. Use when a task needs to drive a real browser, scrape a
