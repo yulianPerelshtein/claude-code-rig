@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.28]
+
+### Changed
+
+- **`memory`, `scraping` and `begin-work` are slash-only.** The first two need
+  an opt-in MCP server (serena, Playwright) that is off by default, so their
+  descriptions sat in every session's skill listing for skills that could not
+  run. `begin-work` is a command skill, and command skills were already
+  slash-only by convention. All three still load with `/claude-code-rig:<name>`,
+  and the `begin-work` routine invokes it that way. The frontmatter reference
+  now says opt-in tool domains are manual-only.
+
 ## [0.0.27]
 
 ### Fixed
