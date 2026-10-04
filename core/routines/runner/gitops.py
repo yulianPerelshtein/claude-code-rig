@@ -54,7 +54,10 @@ def create_worktree(repo, branch: str) -> Path:
     assert_push_allowed(branch=branch, default_branch=default_branch(repo))
     worktree = Path(tempfile.mkdtemp(prefix="cc-routine-wt-"))
     try:
-        _git(repo, "worktree", "add", "-b", branch, str(worktree))
+        # Hooks off: a hook that seeds new worktrees (a linked .venv, a copied .env)
+        # would add paths outside the worktree, which the commit-time check refuses.
+        _git(repo, "-c", "core.hooksPath=/dev/null", "worktree", "add", "-b", branch,
+             str(worktree))
     except subprocess.CalledProcessError:
         shutil.rmtree(worktree, ignore_errors=True)
         raise
