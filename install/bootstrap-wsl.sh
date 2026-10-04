@@ -196,7 +196,7 @@ if claude plugin marketplace add "${RIG_DIR}"; then
 else
     warn "marketplace add failed or already present"
 fi
-if claude plugin install "claude-code-rig@claude-code-rig"; then
+if claude plugin install "ccrig@claude-code-rig"; then
     ok "plugin installed"
 else
     fail "plugin install failed"

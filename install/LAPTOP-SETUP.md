@@ -83,7 +83,7 @@ PowerShell and reopen Ubuntu (that reload covers PATH too).
 claude auth login        # choose your Claude.ai Team account
 claude --version         # must be >= 2.1.80
 ~/claude-code-rig/install/bootstrap-wsl.sh   # preflight + marketplace install
-claude plugin list       # claude-code-rig@claude-code-rig should be enabled
+claude plugin list       # ccrig@claude-code-rig should be enabled
 ```
 
 `bootstrap-wsl.sh` runs the env preflight, then
@@ -130,7 +130,7 @@ result — it decides the dashboard's fallback.
 ## 7. Rollback
 
 ```bash
-claude plugin uninstall claude-code-rig@claude-code-rig
+claude plugin uninstall ccrig@claude-code-rig
 claude plugin marketplace remove claude-code-rig
 ```
 

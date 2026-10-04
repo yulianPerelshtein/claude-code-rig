@@ -22,7 +22,7 @@ set -uo pipefail
 
 RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MARKET_DIR="${HOME}/.claude/plugins/marketplaces/claude-code-rig"
-PLUGIN_ID="claude-code-rig@claude-code-rig"
+PLUGIN_ID="ccrig@claude-code-rig"
 
 DRY_RUN=0
 NO_PUSH=0

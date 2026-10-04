@@ -1,5 +1,5 @@
 {
-  "name": "claude-code-rig",
+  "name": "ccrig",
   "version": "0.0.28",
   "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles.",
   "skills": [
