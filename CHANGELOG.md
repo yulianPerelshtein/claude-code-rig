@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0]
+
+### Changed
+
+- **Breaking: the plugin is now `ccrig`.** Claude Code reserves plugin names
+  that start with `claude-` for Anthropic's own, and `claude plugin validate`
+  rejected `claude-code-rig`. Skills are now `/ccrig:<name>`, and the install
+  key is `ccrig@claude-code-rig`; the repo and marketplace keep their names. An
+  existing install must switch: `claude plugin uninstall
+  claude-code-rig@claude-code-rig`, then `claude plugin install
+  ccrig@claude-code-rig`. Routines are unaffected: they invoke skills without
+  the plugin prefix.
+
 ## [0.0.28]
 
 ### Changed
