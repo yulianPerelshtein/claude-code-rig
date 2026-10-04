@@ -50,7 +50,7 @@ installer for locked-down machines). It adds:
 
 ```bash
 claude plugin marketplace add https://github.com/yulianPerelshtein/claude-code-rig
-claude plugin install claude-code-rig@claude-code-rig
+claude plugin install ccrig@claude-code-rig
 claude plugin list   # confirm it's enabled
 ```
 

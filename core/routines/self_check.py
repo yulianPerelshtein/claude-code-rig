@@ -34,7 +34,7 @@ CLAUDE_DIR = Path(os.path.expanduser("~/.claude"))
 REPORT_DIR = CLAUDE_DIR / "data" / "self-check"
 UNIT_DIR = Path(os.path.expanduser("~/.config/systemd/user"))
 INSTALLED_PLUGINS = CLAUDE_DIR / "plugins" / "installed_plugins.json"
-PLUGIN_KEY = "claude-code-rig@claude-code-rig"
+PLUGIN_KEY = "ccrig@claude-code-rig"
 
 PASS, FAIL, SKIP = "PASS", "FAIL", "SKIP"
 

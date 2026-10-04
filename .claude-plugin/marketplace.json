@@ -6,7 +6,7 @@
   },
   "plugins": [
     {
-      "name": "claude-code-rig",
+      "name": "ccrig",
       "source": "./",
       "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles."
     }

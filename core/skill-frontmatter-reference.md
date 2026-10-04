@@ -86,7 +86,7 @@ paths:
   domains (OTel) that shouldn't reload on every source edit. Domains for opt-in
   MCP servers (serena, Playwright) are `disable-model-invocation: true`: they
   cannot work until the server is enabled, so they stay out of the listing and
-  load with `/claude-code-rig:<name>` once it is.
+  load with `/ccrig:<name>` once it is.
 - **Agents** (`core/agents/*`): agents do **not** take `context`/`!`-injection
   (those are skill fields). Right-size cost with `model:`, give cross-session
   memory with `memory: user` (#27), and isolate writes with
