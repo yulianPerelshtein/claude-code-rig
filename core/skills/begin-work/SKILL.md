@@ -1,5 +1,6 @@
 ---
 name: begin-work
+disable-model-invocation: true
 description: Daily startup brief — fetch, branch status, today's plan, light drift, yesterday's loose ends (report-only).
 argument-hint: "--target <repo>"
 allowed-tools: Bash, Read, Grep

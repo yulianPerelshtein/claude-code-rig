@@ -1,5 +1,6 @@
 ---
 name: memory
+disable-model-invocation: true
 description: >-
   Semantic code retrieval and project memory via the serena MCP (LSP-backed
   symbol navigation), on top of native MEMORY.md. Use when navigating a large

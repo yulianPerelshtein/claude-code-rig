@@ -83,7 +83,10 @@ paths:
   their first action is a deterministic read (`git status`, `gh pr diff`).
 - **Domain skills** (`domains/*/SKILL.md`): `paths:`-scoped when the knowledge
   maps to a file type; **description-triggered (no `paths:`)** for tool/reference
-  domains (serena, Playwright, OTel) that shouldn't reload on every source edit.
+  domains (OTel) that shouldn't reload on every source edit. Domains for opt-in
+  MCP servers (serena, Playwright) are `disable-model-invocation: true`: they
+  cannot work until the server is enabled, so they stay out of the listing and
+  load with `/claude-code-rig:<name>` once it is.
 - **Agents** (`core/agents/*`): agents do **not** take `context`/`!`-injection
   (those are skill fields). Right-size cost with `model:`, give cross-session
   memory with `memory: user` (#27), and isolate writes with
