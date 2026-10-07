@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2]
+
+### Added
+
+- **Rules promoted from memory.** Layer 1 now asks for its own permission
+  before opening or closing a PR and before deleting a remote branch. It asks
+  for plain English (B2 level) in replies. It asks the agent to decide what the
+  evidence settles and to put the user's own decisions as multiple-choice
+  questions. It treats an auto-mode classifier denial like a guardrail block.
+  `parallel-agent-orchestration.md` gains "A read-only brief is not a fence".
+  `test-economy.md` now parametrizes only cases of the same check.
+  `distilled.md` gains three entries: `git replay` moves refs, deleting a base
+  branch closes stacked PRs, and WSL2 DNS drops look like auth failures.
+
+### Changed
+
+- **An unattended weekly retro no longer edits `core/`.** Core files load in
+  every session, so a promotion that belongs there now waits for a session with
+  the user. The run leaves its slug unjudged, and the next report lists it
+  again.
+
 ## [0.1.1]
 
 ### Fixed
