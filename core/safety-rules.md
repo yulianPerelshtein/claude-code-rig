@@ -28,5 +28,7 @@
 - The Bash guardrail (`hooks/blocked-commands.json` + `pre-tool/guardrail.py`,
   wired as a PreToolUse hook) rejects blocked command patterns automatically
   (e.g. `ruff format`, force-push) and prompts for confirmation on `/mnt/c`
-  access. Treat a guardrail rejection as a hard stop, not a prompt to find a
-  workaround.
+  access. Treat a guardrail rejection, or an auto-mode classifier denial, as a
+  hard stop, not a prompt to find a workaround. If the task still needs that
+  step, give the user the exact command, say what it does, and carry on with
+  the rest.
