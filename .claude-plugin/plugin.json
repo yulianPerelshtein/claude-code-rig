@@ -1,6 +1,6 @@
 {
   "name": "ccrig",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Personal Claude Code rig: skills-first core, paths-scoped domains, native hooks, agents, and output styles.",
   "skills": [
     "./core/skills/",
