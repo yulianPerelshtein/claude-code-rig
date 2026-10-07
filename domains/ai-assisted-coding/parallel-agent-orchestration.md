@@ -26,4 +26,26 @@ utility modules, test edge cases, and migration history. Name the service file
 explicitly in the prompt; for deep passes: service file → utils → 3 test files
 → last 3 migrations.
 
+## A read-only brief is not a fence
+
+Review agents briefed read-only, with a `tools:` list like `Bash(git *)`, still
+ran `sed -i`, stashed, switched branches and committed in checkouts they could
+reach. A fork started with the Agent tool (`subagent_type: fork`) inherits the
+parent's conversation, pending plan included, and may carry that plan out. The
+permission classifier blocks some of these writes, not all.
+
+- Before launch: snapshot every reachable checkout (`git status --porcelain`,
+  `git diff | sha256sum`, `git stash list`) and touch a marker file. Name the
+  write steps as out of scope ("report and stop; do not edit, commit, or write
+  memory").
+- The report is complete before the agent starts writing: TaskStop it when the
+  report arrives. Never commit while it still runs, and deny a permission prompt
+  that names its target directory.
+- Audit only after it stops: compare with the snapshot, plus
+  `find <tree> -newer <marker>`, which also sees untracked and gitignored files.
+- For review work, a `general-purpose` agent with an explicit read-only paragraph
+  made no write attempts where custom critic agents did.
+- Such a fork cannot call the Agent tool. Launch parallel forks from the
+  top-level session, in one message.
+
 Companion playbook: `playbooks/ai-assisted-coding/parallel-agent-fan-out.md`.

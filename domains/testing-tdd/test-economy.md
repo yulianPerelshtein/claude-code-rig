@@ -30,6 +30,10 @@ In order of preference:
 
 A parametrized test keeps one body. A copy drifts from its original.
 
+Parametrize only cases of the same check. Two checks that merely share the
+function under test stay in separate tests; following the file's existing
+one-test-per-check layout is not a new pattern.
+
 ## Keep a named case where a loop cannot see
 
 A test that loops over a registry or a set ("every listed member is
