@@ -258,3 +258,15 @@ An `npx`-launched MCP server reporting "Failed to connect" with `npm error enoen
 ## 2026-07-23 CI-CANONICAL-INVOCATION
 
 Read the CI workflow for the canonical lint/test command instead of assuming the standard one; a repo with no `[project]` table needs `uv run --with pytest --with pyyaml pytest`, not `uv run pytest`. Also diff pre-commit hook args against CI — a hook running a linter at default severity while CI runs `--severity=warning` fails on pre-existing findings the moment it is installed.
+
+## 2026-10-04 GIT-REPLAY-UPDATES-REFS
+
+`git replay --onto <base> <range>` (git 2.53) updates the branch refs itself and prints nothing; it is not a dry run. To simulate a rebase use `git replay --ref-action=print ...`, or `git merge-tree --write-tree` + `git commit-tree` (objects only). Check `git reflog -1 <branch>` after any "dry" git command; undo with `git update-ref <ref> <old>`.
+
+## 2026-10-04 DELETE-BASE-BRANCH-CLOSES-STACKED-PRS
+
+A `git push --delete` of a branch that open PRs use as base closed them, even after its own PR merged, and a closed PR's base cannot be edited. Before deleting, run `gh pr list --base <branch>` and retarget each (`gh pr edit <n> --base <new>`). Recovery: push the branch back, `gh pr reopen <n>`, retarget, delete again.
+
+## 2026-10-04 WSL2-GITHUB-DNS-FLAKE
+
+Under WSL2, `Could not read from remote repository` or gh's `error connecting to api.github.com` is usually a DNS drop, not auth. Run `getent hosts github.com`, retry once, and touch SSH keys only if `ssh -T git@github.com` fails. For an outward write, check whether it landed before retrying.
