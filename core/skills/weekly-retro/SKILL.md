@@ -34,7 +34,8 @@ accepted candidates, so it does not duplicate that analysis.
      personal workflow trivia stay local regardless of how cross-cutting they
      look: the rig is a **public** repo.
 
-   **Record every verdict** in `~/.claude/data/memory-promotion/decisions.json`
+   **Record every verdict** (step 4 names the one exception) in
+   `~/.claude/data/memory-promotion/decisions.json`
    as `{"<slug>": {"verdict": "promoted|local|covered", "date": "YYYY-MM-DD",
    "note": "<where it went, or why it stays>"}}`. The routine reads that file and
    drops judged slugs into an "already judged" section. Skip this and next
@@ -45,7 +46,10 @@ accepted candidates, so it does not duplicate that analysis.
    operational rule only).
 4. Apply edits **only** inside `<target>/learnings/distilled.md` (or the
    target's configured learnings path), plus any Layer-1/domain file a
-   **promote** decision calls for. Touch nothing else.
+   **promote** decision calls for. Touch nothing else. Under `--routine-mode`,
+   never edit `core/`: a promote that belongs there waits for a session with
+   the user, so leave its slug out of `decisions.json` and the next report lists
+   it again.
 5. Under `--routine-mode`, write the proposed diff into the worktree and **stop**
    — do **not** push or open the PR yourself. The runner
    (`runner/cli` → `runner/gitops.open_draft_pr`) commits the worktree, creates
