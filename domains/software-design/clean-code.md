@@ -25,6 +25,9 @@ Software Design*** and **Sandi Metz**.
   similarity — premature deduplication couples things that should move apart.
 - **Deep modules.** Prefer a simple interface over a wide one; a small surface
   hiding real work is the highest-leverage design move there is.
+- **One mechanism per value.** When flow order leaves a fact unavailable, move
+  the read to where the fact is final; a second pass or parse bolted beside the
+  first is a patch that adds compute on every run.
 
 ## Deep modules (Ousterhout)
 
