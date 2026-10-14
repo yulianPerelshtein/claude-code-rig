@@ -270,3 +270,7 @@ A `git push --delete` of a branch that open PRs use as base closed them, even af
 ## 2026-10-04 WSL2-GITHUB-DNS-FLAKE
 
 Under WSL2, `Could not read from remote repository` or gh's `error connecting to api.github.com` is usually a DNS drop, not auth. Run `getent hosts github.com`, retry once, and touch SSH keys only if `ssh -T git@github.com` fails. For an outward write, check whether it landed before retrying.
+
+## 2026-10-14 PKILL-F-MATCHES-OWN-SCRIPT
+
+`pkill -f` / `pgrep -f` search full command lines, and the agent harness runs each Bash call as `bash -c '<whole script>'`, so a literal pattern in the script matches the script's own shell: `pkill` kills itself, a `pgrep` waiter never ends. Stop a child by the PID captured at start (`$!`, a pid file) or match a string only the child carries; never `-f` a literal written in the same script. Same root as GUARDRAIL-TEST-PAYLOADS.
