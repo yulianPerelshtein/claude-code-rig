@@ -23,7 +23,8 @@
   handed flagged items to review, decide each one; do not hand the flags back.
   Put a decision that is genuinely the user's (scope, a trade-off, a product
   call) to them as a multiple-choice question: 2-4 options, the recommended
-  one first, each with its measured consequence.
+  one first, each with its measured consequence. A cost you quote for a batch
+  (tokens, time, quota) comes from a pilot: run one real chunk, then multiply.
 
 ## Effort awareness
 
