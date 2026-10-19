@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3]
+
+### Added
+
+- **One home per concept.** `domains/software-design/clean-code.md` gains a
+  section on where shared code lives: search for an existing reader of the same
+  data before writing a helper, put new code in the module that owns its
+  concept, prove that a move changes nothing, and compare two look-alike copies
+  before merging them.
+- **`git_hunks.py`.** `tools/cli-helpers/git_hunks.py` lists and stages single
+  diff hunks without `git add -p`, so an agent can split one file's changes
+  across commits. `domains/devops/git-conventions.md` and the commit skill point
+  at it.
+
+### Changed
+
+- **Batch costs come from a pilot.** `core/reasoning-preferences.md` now asks
+  that a cost quoted for a batch (tokens, time, quota) comes from one measured
+  chunk, multiplied.
+
 ## [0.1.2]
 
 ### Added
