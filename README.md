@@ -42,7 +42,7 @@ installer for locked-down machines). It adds:
 | `manifests/` | YAML-driven install + module + marketplace state |
 | `install/` | WSL bootstrap, profile installer, dry-run, backup, rollback, validate, uninstall |
 | `profiles/` | install profiles (see below) |
-| `tools/` | CLI helpers (cc-doctor, hooks-profiler) |
+| `tools/` | CLI helpers (cc-doctor, hooks-profiler, git_hunks: stage single hunks without `git add -p`) |
 
 ## Install
 

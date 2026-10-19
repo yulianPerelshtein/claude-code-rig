@@ -24,3 +24,8 @@ another path.
 
 - Never `git add .` / `git add -A` on a repo that contains a `.claude/` dir —
   stage explicit paths so agent-local files never enter a commit.
+- To split one file's changes across commits, stage single hunks with
+  `tools/cli-helpers/git_hunks.py` (`list [PATH]`, then `stage PATH N ...`; in the
+  checkout `~/personal/claude-code-rig/tools/cli-helpers/git_hunks.py`). `git add -p`
+  needs a terminal the agent does not have; rewriting files into an in-between
+  state and restoring them is the slow, risky fallback.

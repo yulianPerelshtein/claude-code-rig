@@ -21,7 +21,8 @@ Create a conventional commit from the working tree above.
 3. Write a conventional commit message: `<type>(<scope>): <description>`.
    Types: feat, fix, refactor, test, docs, chore, perf. **One line only — never
    write a body.** If the change needs explaining, split it into smaller commits
-   that each stand alone rather than adding prose. Rationale belongs in the PR
+   that each stand alone rather than adding prose (stage part of a file with
+   `tools/cli-helpers/git_hunks.py list|stage`). Rationale belongs in the PR
    description or a project note, where it can be revised; a commit body is
    frozen into `git log`. No agent-internals or "Generated with …" trailers (see
    `core/authored-content-rules.md`).
