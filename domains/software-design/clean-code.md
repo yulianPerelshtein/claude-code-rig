@@ -50,6 +50,30 @@ than the duplication it replaced. The discipline:
 - If an existing abstraction is fighting you, **inline it back to duplication
   first**, then re-extract along the seam the requirements actually revealed.
 
+## One home per concept
+
+The rule above says *when* to share code. This one says *where* it lives, and
+how to find the copy that already exists:
+
+- **Search before you write a helper.** Grep for the data it reads (the
+  relation, attribute or table name), not only for a function name. Two
+  functions that read the same thing under different names are the duplicate
+  a reviewer finds later.
+- **Put new code in the module that owns its concept,** not in the file of its
+  first caller. A grab-bag `utils` file is where duplicates hide.
+- **Treat a move as a refactor.** Show that it changes nothing on real inputs,
+  for example old against new output, and keep it in its own commit.
+- **Copies that look alike may differ on an edge case.** Compare their behaviour
+  before you merge them. When they must stay apart, say why in a one-line
+  comment, so nobody "fixes" it later.
+
+Worked example: a classifier needed an IFC element's parent. The new helper
+landed in the classifier's utils file, while the IFC model class already had the
+same lookup. Review moved both reads into one aggregation module, and a check on
+real files showed no element changed type. A third copy, in the storey lookup,
+stayed: it checks every parent where the shared helper takes the first, and that
+edge case is the one the storey lookup exists to handle.
+
 ## The YAGNI ladder
 
 Before writing code, stop at the first rung that holds:
