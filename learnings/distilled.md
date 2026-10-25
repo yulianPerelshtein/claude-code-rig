@@ -270,3 +270,7 @@ A `git push --delete` of a branch that open PRs use as base closed them, even af
 ## 2026-10-04 WSL2-GITHUB-DNS-FLAKE
 
 Under WSL2, `Could not read from remote repository` or gh's `error connecting to api.github.com` is usually a DNS drop, not auth. Run `getent hosts github.com`, retry once, and touch SSH keys only if `ssh -T git@github.com` fails. For an outward write, check whether it landed before retrying.
+
+## 2026-10-25 EDIT-NEEDS-A-READ-TOOL-READ
+
+The Edit tool refuses a file that was only shown through Bash `cat`/`sed` ("File has not been read yet"), and refuses again once anything rewrites it after the Read (`sed -i`, `cp`, a script, a `git` restore: "modified since read"). Make the call before the first Edit of a file a Read of it (a narrow `offset`/`limit` is enough), and Read again after any command that rewrites it.
