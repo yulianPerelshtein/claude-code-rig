@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The session scorer reads real numbers.** Its cost signals came from
+  `cost-log.jsonl`, whose source file nothing writes, so every cost was 0 and
+  they never fired. It now reads token usage from Claude Code's own transcripts
+  (main and subagents, each API call counted once) and flags a token outlier and
+  three or more cache rebuilds of 500k+ tokens in one call. Near-duplicate
+  prompts count only from six words up, and the harness's usage-limit message
+  never counts.
+- **A cost the subscription can use.** `cost_tracker.py` read
+  `~/.claude/last-session.json`, which nothing wrote, so every row was 0. On a
+  subscription the cost of work is the share of the plan's 5-hour and weekly
+  limits; only the statusline receives those, so it now keeps them in
+  `~/.claude/data/plan-usage.json` and the Stop hook logs them per turn, tagged
+  with the session. The session report shows this week's plan usage and the
+  peaks of earlier weeks. Sessions are ranked by API-equivalent cost from the
+  transcripts (`utils/transcript_usage.py`, list prices per model), which weighs
+  cache writes and reads properly where raw tokens did not. The USD budget and
+  its missing `core/budget.template.json` are gone from the `core-budget`
+  composite.
+- **The dream report lists facts, not words.** Its "recurring themes" were word
+  counts over first prompts (read, plan, tool). It now reads each reviewed
+  session's transcript (`utils/transcript_facts.py`) and lists what recurs in
+  two or more sessions: tool-failure classes with paths and ids masked, files
+  edited (a worktree and the main checkout count as one file), skills and
+  subagents used.
+
 ## [0.1.3]
 
 ### Added
