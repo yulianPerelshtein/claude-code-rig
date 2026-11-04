@@ -42,11 +42,11 @@ DREAM_LOG = DATA_DIR / "dream-loop.log"
 
 # Session performance analyzer (item #30): the deterministic Layer-1 scorer
 # writes flagged-session reports here and one JSONL telemetry line per run to
-# SESSION_PERF_LOG. COST_LOG is the home-based cost log written by the
-# cost_tracker.py Stop hook (NOT project-scoped — costs are keyed by session_id).
+# SESSION_PERF_LOG. It reads token usage from Claude Code's own transcripts under
+# TRANSCRIPT_DIR (<project-slug>/<session-id>.jsonl, subagents beside them).
 SESSION_PERF_DIR = DATA_DIR / "session-perf"
 SESSION_PERF_LOG = DATA_DIR / "session-perf.log"
-COST_LOG = Path.home() / ".claude" / "cost-log.jsonl"
+TRANSCRIPT_DIR = Path.home() / ".claude" / "projects"
 
 
 def get_session_log_dir(session_id: str) -> Path:

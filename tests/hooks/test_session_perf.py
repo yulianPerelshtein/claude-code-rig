@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Tests for core/hooks/session/session_perf.py — Layer-1 deterministic scorer.
 
-Covers the no-op contract (no data), flagging by each signal (cost outlier,
-cost/turn, failure density, correction density, near-duplicate prompts), the
+Covers the no-op contract (no data), flagging by each signal (token outlier,
+cache rebuilds, failure density, correction density, near-duplicate prompts), the
 one-JSONL-line-per-invocation telemetry, the window filter, optional OTel
 enrichment, retention pruning, and the never-raises guarantee. All fixtures land
 in a throwaway HOME; the real ~/.claude is never touched.
 """
 
 import json
+import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -65,21 +67,38 @@ def write_prompts(home: Path, session_id: str, prompts: list[str]) -> None:
             )
 
 
-def write_cost(home: Path, session_id: str, cost: float) -> None:
-    path = home / ".claude" / "cost-log.jsonl"
+def write_transcript(
+    home: Path,
+    session_id: str,
+    calls: list[tuple[str, int, int]],
+    subagent: bool = False,
+    lines_per_call: int = 1,
+) -> Path:
+    """Write a Claude Code transcript: one (requestId, cache_write, cache_read) per
+    API call, each written lines_per_call times as streaming does."""
+    project = home / ".claude" / "projects" / "-proj"
+    path = (
+        project / session_id / "subagents" / "agent-a1.jsonl"
+        if subagent
+        else project / f"{session_id}.jsonl"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as fh:
-        fh.write(
-            json.dumps(
-                {
-                    "session_id": session_id,
-                    "timestamp": datetime.now().isoformat(),
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                    "cost_usd": cost,
+        for request_id, cache_write, cache_read in calls:
+            for out in range(1, lines_per_call + 1):
+                usage = {
+                    "input_tokens": 2,
+                    "cache_creation_input_tokens": cache_write,
+                    "cache_read_input_tokens": cache_read,
+                    "output_tokens": out,
                 }
-            )
-            + "\n"
-        )
+                rec = {
+                    "type": "assistant",
+                    "requestId": request_id,
+                    "message": {"id": f"msg-{request_id}", "usage": usage},
+                }
+                fh.write(json.dumps(rec) + "\n")
+    return path
 
 
 def write_failures(home: Path, session_id: str, n: int) -> None:
@@ -138,7 +157,7 @@ def test_no_stdin_tolerated(tmp_path):
 def test_clean_sessions_not_flagged(tmp_path):
     for s in ("a", "b", "c"):
         write_prompts(tmp_path, s, ["implement the feature cleanly", "add tests"])
-        write_cost(tmp_path, s, 0.10)
+        write_transcript(tmp_path, s, [(f"{s}-r1", 20_000, 50_000)])
     run_hook(tmp_path, {"reason": "clear"})
     assert telemetry(tmp_path)[-1]["sessions_flagged"] == 0
     assert "No inefficient sessions flagged" in report_text(tmp_path)
@@ -150,7 +169,6 @@ def test_flags_correction_density(tmp_path):
         "sloppy",
         ["build the parser", "no", "wait that's wrong", "fix it", "still broken"],
     )
-    write_cost(tmp_path, "sloppy", 0.10)
     run_hook(tmp_path, {"reason": "clear"})
     body = report_text(tmp_path)
     assert telemetry(tmp_path)[-1]["sessions_flagged"] == 1
@@ -169,26 +187,52 @@ def test_flags_failure_density(tmp_path):
     assert "learnings/distilled.md" in body
 
 
-def test_flags_cost_outlier(tmp_path):
-    # cohort of cheap sessions + one expensive -> the expensive one is flagged.
-    for s in ("cheap1", "cheap2", "cheap3"):
+def test_flags_token_outlier_counting_subagents(tmp_path):
+    # Cohort of light sessions + one whose subagent read 5M tokens -> flagged;
+    # its main transcript alone is as light as the others.
+    for s in ("light1", "light2", "light3", "heavy"):
         write_prompts(tmp_path, s, ["normal work here please"])
-        write_cost(tmp_path, s, 0.05)
-    write_prompts(tmp_path, "pricey", ["normal work here please"])
-    write_cost(tmp_path, "pricey", 5.00)
+        write_transcript(tmp_path, s, [(f"{s}-r1", 10_000, 40_000)])
+    write_transcript(tmp_path, "heavy", [("heavy-sub", 50_000, 5_000_000)], True)
     run_hook(tmp_path, {"reason": "clear"})
     body = report_text(tmp_path)
-    assert "pricey" in body
-    assert "cost outlier" in body
+    assert telemetry(tmp_path)[-1]["sessions_flagged"] == 1
+    assert "heavy" in body
+    assert "token outlier" in body
+
+
+def test_flags_cache_rebuilds_once_per_call(tmp_path):
+    # "switcher" rebuilt a large cache in three calls -> flagged. "streamed" did it
+    # once, written on three lines as streaming does -> one rebuild, not flagged.
+    # "resumed" replays orig's rebuild call in its own file -> counted for orig only.
+    for s in ("switcher", "streamed", "orig", "resumed"):
+        write_prompts(tmp_path, s, ["normal work here please"])
+    switches = [("sw-1", 800_000, 0), ("sw-2", 700_000, 0), ("sw-3", 600_000, 0)]
+    write_transcript(tmp_path, "switcher", switches)
+    write_transcript(tmp_path, "streamed", [("st-1", 800_000, 0)], lines_per_call=3)
+    orig = write_transcript(tmp_path, "orig", [("or-1", 800_000, 0)])
+    old = time.time() - 3600
+    os.utime(orig, (old, old))
+    replay = [("or-1", 800_000, 0), ("re-1", 800_000, 0), ("re-2", 800_000, 0)]
+    write_transcript(tmp_path, "resumed", replay)
+    run_hook(tmp_path, {"reason": "clear"})
+    body = report_text(tmp_path)
+    assert telemetry(tmp_path)[-1]["sessions_flagged"] == 1
+    assert "switcher" in body
+    assert "3 cache rebuild(s)" in body
 
 
 def test_flags_near_duplicate_prompts(tmp_path):
     # Two substantive prompts repeated verbatim across two sessions -> each
     # session has dup_prompts >= MIN_DUP (2) and is flagged as a skill candidate.
+    # Short replies and harness-typed text repeat too, but are never candidates.
     dup1 = "set up the database migration script"
-    dup2 = "configure the staging deployment pipeline"
+    dup2 = "configure the staging deployment pipeline now"
     write_prompts(tmp_path, "sess-x", [dup1, dup2])
     write_prompts(tmp_path, "sess-y", [dup1, dup2])
+    limit = "Your claude.ai usage limit has reset. Continue the task you were on"
+    for s in ("sess-z", "sess-w"):
+        write_prompts(tmp_path, s, ["i'm logged in", "commit + push + pr", limit])
     run_hook(tmp_path, {"reason": "clear"})
     body = report_text(tmp_path)
     assert "near-duplicate" in body
@@ -278,26 +322,15 @@ def test_unknown_session_ignored(tmp_path):
     assert telemetry(tmp_path)[-1]["sessions_scored"] == 0
 
 
-def test_cost_only_foreign_session_not_scored(tmp_path):
-    # A session present ONLY in the home-global cost log (another project) must
-    # not enter this project's cohort — only prompt/failure-keyed sessions do.
+def test_transcript_only_foreign_session_not_scored(tmp_path):
+    # A session with only a transcript (another project's) must not enter this
+    # project's cohort — only prompt/failure-keyed sessions do.
     write_prompts(tmp_path, "local", ["do the local work here please"])
-    write_cost(tmp_path, "local", 0.10)
-    write_cost(tmp_path, "foreign", 9.99)  # no prompts/failures for "foreign"
+    write_transcript(tmp_path, "local", [("lo-1", 10_000, 40_000)])
+    write_transcript(tmp_path, "foreign", [("fo-1", 900_000, 0), ("fo-2", 900_000, 0)])
     run_hook(tmp_path, {"reason": "clear"})
     assert telemetry(tmp_path)[-1]["sessions_scored"] == 1
     assert "foreign" not in report_text(tmp_path)
-
-
-def test_failure_only_session_not_flagged_on_cost_per_turn(tmp_path):
-    # A failure-only (zero-turn) session with cost must NOT trip the cost/turn
-    # rule with a nonsensical "over 0 turn(s)" reason.
-    write_failures(tmp_path, "failonly", 1)  # below MIN_FAILURES, so no fail flag
-    write_cost(tmp_path, "failonly", 1.00)  # cost/turn would be 1.0 if turns=0->1
-    run_hook(tmp_path, {"reason": "clear"})
-    assert telemetry(tmp_path)[-1]["sessions_scored"] == 1
-    assert telemetry(tmp_path)[-1]["sessions_flagged"] == 0
-    assert "over 0 turn" not in report_text(tmp_path)
 
 
 def test_otel_bad_metric_does_not_crash_scan(tmp_path):

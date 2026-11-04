@@ -15,7 +15,7 @@ Run it more often only if a week was unusually rough.
 
 1. **Read the scan.** The Layer-1 scorer runs at SessionEnd and writes
    `~/.claude/data/session-perf/<date>.md` — flagged sessions ranked worst-first
-   with the signals that tripped (cost, cost/turn, tool-failure density,
+   with the signals that tripped (token outlier, cache rebuilds, tool-failure density,
    correction density, near-duplicate prompts; cache/edit-reject when OTel is
    on). No LLM ran to produce it. If nothing is flagged, you are done.
 2. **Diagnose the worst 1–2.** Run `/analyze-session <session-id>` on the top
