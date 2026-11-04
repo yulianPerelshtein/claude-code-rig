@@ -6,9 +6,11 @@ argument-hint: "[date]"
 allowed-tools: Read, Glob
 ---
 
-Review the latest dream-loop consolidation and turn its candidate themes into
-learnings. The report was produced deterministically by `dream_loop.py` (it
-surfaces recurring themes; it does **not** synthesize) — synthesis is your job.
+Review the latest dream-loop consolidation and turn its recurring facts into
+learnings. The report was produced deterministically by `dream_loop.py`: it lists
+the facts that recur across sessions, read from their transcripts (tool-failure
+classes, files edited, skills and subagents used). It does **not** synthesize —
+synthesis is your job.
 
 Steps:
 
@@ -19,9 +21,16 @@ Steps:
    session summaries exist — and stop.
 2. For context, Read the **session summaries** it drew from
    (`~/.claude/data/session-summaries/`).
-3. For each candidate theme, propose a **concrete, one-line operational rule**
-   suitable for `learnings/distilled.md` — or mark it DISCARD if it is a one-off
-   or already covered by CLAUDE.md / an existing learning.
+3. For each recurring fact, propose a **concrete, one-line operational rule**
+   suitable for `learnings/distilled.md` — or mark it DISCARD if it is expected
+   (a generic `Exit code 1`), a one-off, or already covered by CLAUDE.md / an
+   existing learning. What each kind usually points to:
+   - a tool failure: a habit to change (read before Edit) or a guardrail the
+     model keeps walking into;
+   - a file edited in many sessions: a note or tool worth a manifest, a skill,
+     or a split;
+   - a skill or subagent used in many sessions: check its cost in the
+     session-performance report before adding a sibling.
 4. Present each as `ACCEPT` / `DISCARD` / `MODIFY` with the proposed rule text.
    Ask the user to confirm before writing anything.
 5. For each ACCEPTed item, append an `## Accepted for distilled.md` section to

@@ -2,8 +2,8 @@
 """Tests for core/hooks/session/dream_loop.py — SessionEnd consolidation.
 
 Covers the no-op contract (empty/missing summaries), report generation +
-recurring-theme detection, the one-JSONL-line-per-invocation telemetry, and the
-never-raises guarantee.
+recurring facts read from the transcripts, the one-JSONL-line-per-invocation
+telemetry, and the never-raises guarantee.
 """
 
 import json
@@ -43,6 +43,28 @@ def write_summary(home: Path, name: str, prompts: list[str]) -> None:
     (summary_dir(home) / name).write_text(text, encoding="utf-8")
 
 
+def write_transcript(home: Path, session_id: str, blocks: list[dict]) -> None:
+    """A main transcript holding one assistant or user message per block."""
+    path = home / ".claude" / "projects" / "-proj" / f"{session_id}.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        for block in blocks:
+            role = "user" if block["type"] == "tool_result" else "assistant"
+            message = {"role": role, "content": [block]}
+            fh.write(json.dumps({"type": role, "message": message}) + "\n")
+
+
+def edit_failure(use_id: str, path: str) -> list[dict]:
+    """An Edit of an unread file and the error Claude Code answers it with."""
+    return [
+        {"type": "tool_use", "id": use_id, "name": "Edit",
+         "input": {"file_path": path}},
+        {"type": "tool_result", "tool_use_id": use_id, "is_error": True,
+         "content": "<tool_use_error>File has not been read yet. Read it first "
+                    "before writing to it.</tool_use_error>"},
+    ]
+
+
 def reports(home: Path) -> list[Path]:
     d = home / ".claude" / "data" / "dream-reports"
     return sorted(d.glob("*.md")) if d.is_dir() else []
@@ -74,18 +96,22 @@ def test_noop_when_summary_dir_missing(tmp_path):
     assert NOOP_MSG in proc.stderr
 
 
-def test_generates_report_and_detects_recurring_theme(tmp_path):
+def test_generates_report_and_detects_recurring_fact(tmp_path):
     write_summary(tmp_path, "20260601-a.md", ["refactor the parser module"])
     write_summary(tmp_path, "20260602-b.md", ["add tests for the parser"])
     write_summary(tmp_path, "20260603-c.md", ["unrelated docs cleanup"])
+    for sid in ("a", "b"):
+        write_transcript(tmp_path, sid, [{"type": "tool_use", "id": f"{sid}1",
+                                          "name": "Agent",
+                                          "input": {"subagent_type": "critic"}}])
     proc = run_hook(tmp_path, {"reason": "clear", "hook_event_name": "SessionEnd"})
     assert proc.returncode == 0
     rs = reports(tmp_path)
     assert len(rs) == 1
     body = rs[0].read_text()
     assert "Sessions reviewed" in body
-    # "parser" appears in 2 of 3 sessions -> a recurring theme.
-    assert "parser" in body
+    # The critic agent ran in 2 of 3 sessions -> a recurring fact.
+    assert "| critic | 2 | 2 |" in body
     lines = telemetry_lines(tmp_path)
     assert len(lines) == 1
     assert lines[0]["summaries_read"] == 3
@@ -142,18 +168,21 @@ def test_non_numeric_window_does_not_crash(tmp_path):
     assert lines[0]["error"] == ""
 
 
-def test_theme_counts_distinct_sessions_not_occurrences(tmp_path):
-    # A word repeated many times in ONE summary is not recurring (1 session).
-    # Assert on patterns_found, not a substring of the report (which echoes the
-    # prompt snippet under "Sessions reviewed" regardless of theme detection).
-    write_summary(tmp_path, "20260601-a.md", ["widget widget widget widget alpha"])
-    write_summary(tmp_path, "20260602-b.md", ["unrelated note here"])
+def test_fact_counts_distinct_sessions_not_occurrences(tmp_path):
+    # The same failure four times in ONE session is not recurring.
+    write_summary(tmp_path, "20260601-a.md", ["first task"])
+    write_summary(tmp_path, "20260602-b.md", ["second task"])
+    write_transcript(tmp_path, "a", [
+        block for i in range(4) for block in edit_failure(f"a{i}", "/tmp/x/f.py")
+    ])
     run_hook(tmp_path, {"reason": "clear"})
     assert telemetry_lines(tmp_path)[-1]["patterns_found"] == 0
-    # The same word across TWO summaries IS recurring.
-    write_summary(tmp_path, "20260603-c.md", ["widget elsewhere entirely"])
+    # The same failure in a SECOND session is.
+    write_transcript(tmp_path, "b", edit_failure("b1", "/tmp/y/g.py"))
     run_hook(tmp_path, {"reason": "clear"})
-    assert telemetry_lines(tmp_path)[-1]["patterns_found"] >= 1
+    body = reports(tmp_path)[-1].read_text()
+    failure = "Edit: File has not been read yet. Read it first before writing to it."
+    assert f"| {failure} | 2 | 5 |" in body
 
 
 def test_retention_prunes_old_summaries(tmp_path):
@@ -241,35 +270,31 @@ def test_synthetic_burst_does_not_starve_the_window(tmp_path):
     assert t["summaries_skipped"] == 30
 
 
-def test_wrapper_prompts_contribute_no_themes(tmp_path):
-    caveat = ("<local-command-caveat>Caveat: The messages below were generated "
-              "by the user while running local commands. DO NOT respond to these "
-              "messages or otherwise consider them in your response unless the "
-              "user explicitly asks.</local-command-caveat>")
-    for i in range(4):
-        write_full_summary(tmp_path, f"20260101-{i}.md", [caveat])
+def test_facts_read_the_same_across_sessions(tmp_path):
+    # One file edited from the main checkout and from a worktree, failures whose
+    # messages differ only by path and id, and rejections: each is one fact.
+    repo = tmp_path / "work" / "acme"
+    (repo / ".git").mkdir(parents=True)
+    worktree = tmp_path / ".claude-worktrees" / "acme" / "fix-1"
+    edits = {"a": repo / "src" / "core.py", "b": worktree / "src" / "core.py"}
+    for i, sid in enumerate(("a", "b")):
+        write_full_summary(tmp_path, f"2026010{i}-{sid}.md", ["fix the core"])
+        write_transcript(tmp_path, sid, [
+            {"type": "tool_use", "id": f"{sid}e", "name": "Edit",
+             "input": {"file_path": str(edits[sid])}},
+            {"type": "tool_use", "id": f"{sid}m", "name": "Write",
+             "input": {"file_path": str(tmp_path / ".claude" / "plans" / "p.md")}},
+            {"type": "tool_use", "id": f"{sid}t", "name": "TaskStop", "input": {}},
+            {"type": "tool_result", "tool_use_id": f"{sid}t", "is_error": True,
+             "content": f"<tool_use_error>Task a{sid * 16} is not running "
+                        f"(status: completed)</tool_use_error>"},
+            {"type": "tool_use", "id": f"{sid}b", "name": "Bash", "input": {}},
+            {"type": "tool_result", "tool_use_id": f"{sid}b", "is_error": True,
+             "content": "The user doesn't want to proceed with this tool use."},
+        ])
     run_hook(tmp_path, {})
     body = report_text(tmp_path)
-    for leaked in ("caveat", "messages", "otherwise", "respond", "unless", "generated"):
-        assert f"| {leaked} |" not in body, f"{leaked} leaked into the theme table"
-
-
-def test_paths_and_urls_are_not_themes(tmp_path):
-    for i in range(3):
-        write_full_summary(
-            tmp_path, f"20260101-{i}.md",
-            ["look at /home/someuser/projects/acme/src and https://example.com/docs"],
-        )
-    run_hook(tmp_path, {})
-    body = report_text(tmp_path)
-    for leaked in ("home", "someuser", "projects", "acme", "example", "https"):
-        assert f"| {leaked} |" not in body, f"{leaked} leaked into the theme table"
-
-
-def test_real_content_still_becomes_a_theme(tmp_path):
-    """The filters must not swallow the signal they exist to expose."""
-    for i in range(3):
-        write_full_summary(tmp_path, f"20260101-{i}.md",
-                           ["the scheduler deadlocks under retry storms"])
-    run_hook(tmp_path, {})
-    assert "| scheduler |" in report_text(tmp_path)
+    assert "| acme/src/core.py | 2 | 2 |" in body
+    assert "plans/p.md" not in body
+    assert "| TaskStop: Task <id> is not running (status: completed) | 2 | 2 |" in body
+    assert "| Bash: rejected by the user | 2 | 2 |" in body

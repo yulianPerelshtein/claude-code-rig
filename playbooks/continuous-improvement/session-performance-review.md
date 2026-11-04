@@ -1,7 +1,7 @@
 # Session performance review
 
 The diagnostic half of the continuous-improvement loop. Where `/dream-report`
-surfaces recurring *themes* across sessions, this cadence finds the *inefficient
+surfaces recurring *facts* across sessions, this cadence finds the *inefficient
 or failed* sessions and routes the fix. It pairs the deterministic Layer-1
 scorer (`core/hooks/session/session_perf.py`, item #30) with the on-demand
 `/analyze-session` skill.
@@ -67,5 +67,5 @@ borrowed, not its code).
   folds into.
 - `playbooks/observability/otel-insights-review.md` — the quantitative companion
   (OTel trends); pairs with this qualitative pass.
-- `playbooks/continuous-improvement/sleep-dream-mode.md` — the *themes* half
+- `playbooks/continuous-improvement/sleep-dream-mode.md` — the *recurring facts* half
   (`/dream-report`), complementary to this *inefficiency* half.
