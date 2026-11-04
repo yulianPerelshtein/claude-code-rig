@@ -21,12 +21,15 @@ GIT_ENV = {
 def git(*args: str, cwd: Path) -> str:
     """Run git in `cwd` with a fixed identity and no user config."""
     env = {**os.environ, **GIT_ENV}
-    return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout
+    return subprocess.run(
+        ["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True
+    ).stdout
 
 
 @pytest.fixture
 def three_hunks(tmp_path, monkeypatch):
-    """A repo whose one file has three unstaged changes far enough apart to be three hunks."""
+    """A repo whose one file has three unstaged changes far enough apart to be
+    three hunks."""
     git("init", "-q", cwd=tmp_path)
     lines = [f"line {n}\n" for n in range(1, 31)]
     (tmp_path / "f.txt").write_text("".join(lines))
@@ -45,7 +48,8 @@ def test_stage_puts_only_the_chosen_hunks_in_the_index(three_hunks):
     git_hunks.stage("f.txt", [1, 3])
     staged = git("diff", "--cached", cwd=three_hunks)
     unstaged = git("diff", cwd=three_hunks)
-    assert "+changed 2" in staged and "+changed 28" in staged and "changed 15" not in staged
+    assert "+changed 2" in staged and "+changed 28" in staged
+    assert "changed 15" not in staged
     assert "+changed 15" in unstaged and "changed 2" not in unstaged
 
 

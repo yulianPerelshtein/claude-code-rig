@@ -2,13 +2,16 @@
 """
 List and stage single diff hunks without an interactive prompt.
 
-`git add -p` needs a terminal, so an agent splitting one change into commits that each stand alone cannot use it.
-`list` numbers the unstaged hunks of each changed file; `stage` puts the chosen hunks of one file in the index with
-`git apply --cached`, leaving the rest in the working tree. Numbers come from a `list` run just before: staging
-renumbers what is left.
+`git add -p` needs a terminal, so an agent splitting one change into commits that
+each stand alone cannot use it. `list` numbers the unstaged hunks of each changed
+file; `stage` puts the chosen hunks of one file in the index with
+`git apply --cached`, leaving the rest in the working tree. Numbers come from a
+`list` run just before: staging renumbers what is left.
 
-    git_hunks.py list [PATH ...]          # "<path> <n>: @@ -a,b +c,d @@ <first changed line>"
-    git_hunks.py stage PATH N [N ...]     # stage hunks N of PATH, numbered as `list PATH` shows them
+    git_hunks.py list [PATH ...]
+        one line per hunk: "<path> <n>: @@ -a,b +c,d @@ <first changed line>"
+    git_hunks.py stage PATH N [N ...]
+        stage hunks N of PATH, numbered as `list PATH` shows them
 """
 import argparse
 import subprocess
@@ -17,8 +20,11 @@ from typing import List, Sequence, Tuple
 
 
 def _git(*args: str, stdin: str = "") -> str:
-    """Run git in the current repository and return its stdout; a failing git command raises."""
-    return subprocess.run(["git", *args], input=stdin or None, check=True, capture_output=True, text=True).stdout
+    """Run git in the current repository and return its stdout; a failing git
+    command raises."""
+    return subprocess.run(
+        ["git", *args], input=stdin or None, check=True, capture_output=True, text=True
+    ).stdout
 
 
 def split_hunks(diff: str) -> Tuple[str, List[str]]:
@@ -33,7 +39,8 @@ def split_hunks(diff: str) -> Tuple[str, List[str]]:
     Returns
     -------
     Tuple[str, List[str]]
-        The header lines (`diff --git`, `index`, `---`, `+++`) and each hunk's text from its `@@` line to the next.
+        The header lines (`diff --git`, `index`, `---`, `+++`) and each hunk's
+        text from its `@@` line to the next.
     """
     header: List[str] = []
     hunks: List[str] = []
@@ -48,12 +55,14 @@ def split_hunks(diff: str) -> Tuple[str, List[str]]:
 
 
 def _file_diff(path: str) -> str:
-    """The unstaged diff of one path, three lines of context, no colour or external driver."""
+    """The unstaged diff of one path: three lines of context, no colour, no
+    external diff driver."""
     return _git("diff", "--no-color", "--no-ext-diff", "-U3", "--", path)
 
 
 def list_hunks(paths: Sequence[str]) -> List[str]:
-    """One line per unstaged hunk of `paths` (every changed file when empty), numbered from 1 per file."""
+    """One line per unstaged hunk of `paths` (every changed file when empty),
+    numbered from 1 per file."""
     lines = []
     for path in paths or _git("diff", "--name-only").splitlines():
         _, hunks = split_hunks(_file_diff(path))
@@ -89,7 +98,9 @@ def stage(path: str, numbers: Sequence[int]) -> None:
 
 
 def main(argv: Sequence[str]) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = ap.add_subparsers(dest="command", required=True)
     sub.add_parser("list").add_argument("paths", nargs="*")
     stage_cmd = sub.add_parser("stage")
