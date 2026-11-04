@@ -4,7 +4,9 @@
 Runs *after* a session ends (or from cron/systemd), reads the recent session
 summaries written by session_end.py, and writes a deterministic consolidation
 report to ~/.claude/data/dream-reports/<date>.md. It does NO model inference —
-it surfaces recurring themes as a scaffold; the /dream-report skill is where the
+it lists the facts that recur across the reviewed sessions (failure classes,
+files edited, skills and agents used; utils/transcript_facts.py reads them from
+each session's transcript) as a scaffold; the /dream-report skill is where the
 model turns candidates into learnings.
 
 Contract (per ENHANCEMENTS_BACKLOG §7):
@@ -30,55 +32,26 @@ from utils.constants import (  # noqa: E402
     SESSION_SUMMARY_DIR,
 )
 from utils.hooklib import append_jsonl, int_env, read_payload  # noqa: E402
+from utils.transcript_facts import KINDS, session_facts  # noqa: E402
 
 # A window of 7 let one burst of probe runs fill the corpus; synthetic sessions
 # are now excluded BEFORE the window is applied, so this counts real sessions.
 DEFAULT_WINDOW = 25
 DEFAULT_KEEP = 500  # retention: max session-summary files to keep on disk
 DREAM_LOG_MAX_LINES = 2000  # cap dream-loop.log when it grows past ~512 KB
-TOP_THEMES = 12
+TOP_FACTS = 10  # per kind
 RECURRING_MIN_SESSIONS = 2
 SNIPPET_LEN = 200
 # A session with almost no exchange carries no lesson; below this it is a probe
 # or an aborted start, whether or not anything marked it.
 MIN_MESSAGES = 6
 
-# Machine-generated wrappers Claude Code injects into a transcript. Their tag
-# names and boilerplate prose were, for a month, the entire theme table: every
-# report's top themes were `command-args`, `local-command-caveat`, `generated`
-# and friends, because they recur in every session that runs a slash command.
-MARKUP_RE = re.compile(r"<[^>]*>")
 # A "prompt" that opens with a wrapper tag is not a human prompt at all: it is
 # Claude Code injecting the slash-command envelope, a command's stdout, or a
 # task notification. 126 of 309 captured prompt bullets were these. Stripping
 # the tags alone was not enough — the caveat's own prose ("the messages below
 # were generated ... DO NOT respond ... unless") then became the theme table.
 WRAPPER_LEAD_RE = re.compile(r"^\s*<[a-z][a-z0-9-]*>")
-URL_RE = re.compile(r"https?://\S+")
-# Absolute paths tokenise into their segments, which surfaced `home`, the
-# username and the employer name as "recurring themes" — noise, and precisely
-# the strings the redaction markers exist to keep out of shared text.
-PATH_RE = re.compile(r"(?:~|\.{0,2})/[\w.~/-]+")
-# Harness notices that appear mid-transcript rather than as a wrapper tag.
-NOTICE_RE = re.compile(r"\[(?:request interrupted|[^\]]*interrupted by user)[^\]]*\]",
-                       re.IGNORECASE)
-# WORD_RE requires >= 4 chars, so only meaningful long tokens are counted.
-STOPWORDS = frozenset(
-    """
-    that this with from have will your you are not but its into over only
-    just then them they when what which while none captured user assistant
-    session summary first last results
-    command commands command-name command-args command-message caveat
-    local-command-caveat local task-notification task-id tool-use-id
-    output-file system-reminder bash-input bash-stdout bash-stderr status
-    stdout stderr asks below consider explicitly generated response
-    something these those should would could might must need needs want
-    wants right there here like about after before because being other
-    than their thing things still also make made does done please thanks
-    when where does note only very much many some such into onto
-    """.split()
-)
-WORD_RE = re.compile(r"[a-z][a-z0-9_-]{3,}")
 BULLET_RE = re.compile(r"^- (.+)$")
 PROJECT_RE = re.compile(r"^- Project:\s*(.+)$", re.MULTILINE)
 MESSAGES_RE = re.compile(r"^- Messages with text:\s*(\d+)", re.MULTILINE)
@@ -168,11 +141,16 @@ def first_prompts(text: str) -> list[str]:
     return out
 
 
-def aggregate(paths: list[Path]) -> tuple[list[tuple[str, str]], list[tuple[str, int]]]:
-    """Return (session entries, recurring themes). An entry is (name, snippet);
-    a theme is (word, number_of_sessions_it_appears_in)."""
+Fact = tuple[str, str, int, int]  # kind, value, sessions, occurrences
+
+
+def aggregate(paths: list[Path]) -> tuple[list[tuple[str, str]], list[Fact]]:
+    """Return (session entries, recurring facts). An entry is (summary name,
+    first-prompt snippet). A fact recurs when it appears in RECURRING_MIN_SESSIONS
+    or more sessions; the TOP_FACTS of each kind are kept, most sessions first."""
     entries: list[tuple[str, str]] = []
-    doc_freq: dict[str, int] = {}
+    sessions: dict[tuple[str, str], int] = {}
+    occurrences: dict[tuple[str, str], int] = {}
     for path in paths:
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
@@ -183,50 +161,67 @@ def aggregate(paths: list[Path]) -> tuple[list[tuple[str, str]], list[tuple[str,
         ]
         snippet = prompts[0][:SNIPPET_LEN] if prompts else "(no user prompt captured)"
         entries.append((path.name, snippet))
-        text_l = " ".join(prompts).lower()
-        for pattern in (MARKUP_RE, NOTICE_RE, URL_RE, PATH_RE):
-            text_l = pattern.sub(" ", text_l)
-        cleaned = text_l
-        words = {w for w in WORD_RE.findall(cleaned) if w not in STOPWORDS}
-        for w in words:
-            doc_freq[w] = doc_freq.get(w, 0) + 1
-    themes = sorted(
-        ((w, n) for w, n in doc_freq.items() if n >= RECURRING_MIN_SESSIONS),
-        key=lambda kv: (-kv[1], kv[0]),
-    )[:TOP_THEMES]
-    return entries, themes
+        # Summary names are <YYYYMMDD>-<session id>.md (session_end.py).
+        for kind, values in session_facts(path.stem.partition("-")[2]).items():
+            for value, count in values.items():
+                sessions[(kind, value)] = sessions.get((kind, value), 0) + 1
+                occurrences[(kind, value)] = occurrences.get((kind, value), 0) + count
+    facts: list[Fact] = []
+    for kind in KINDS:
+        recurring = sorted(
+            (
+                (value, n, occurrences[(k, value)])
+                for (k, value), n in sessions.items()
+                if k == kind and n >= RECURRING_MIN_SESSIONS
+            ),
+            key=lambda f: (-f[1], -f[2], f[0]),
+        )
+        facts += [(kind, v, n, o) for v, n, o in recurring[:TOP_FACTS]]
+    return entries, facts
 
 
-def render_report(entries: list[tuple[str, str]], themes: list[tuple[str, int]]) -> str:
+FACT_HEADINGS = {
+    "failure": "Tool failures",
+    "edited": "Files edited",
+    "skill": "Skills and commands used",
+    "agent": "Subagents used",
+}
+
+
+def render_report(entries: list[tuple[str, str]], facts: list[Fact]) -> str:
     lines = [
         f"# Dream report — {datetime.now().strftime('%Y-%m-%d %H:%M')}",
         "",
-        f"Consolidated from {len(entries)} recent session summary file(s). "
-        "This is a deterministic scaffold — run `/dream-report` to have the model "
-        "turn the candidates below into learnings.",
+        f"Consolidated from {len(entries)} recent session summary file(s) and "
+        "their transcripts. This is a deterministic scaffold — run `/dream-report` "
+        "to have the model turn the candidates below into learnings.",
         "",
         "## Sessions reviewed",
         "",
     ]
     lines += [f"- `{name}` — {snippet}" for name, snippet in entries]
-    lines += ["", "## Recurring themes (appear in 2+ sessions)", ""]
-    if themes:
-        lines.append("| Theme | Sessions |")
-        lines.append("|---|---|")
-        lines += [f"| {word} | {n} |" for word, n in themes]
-    else:
-        lines.append("_No theme recurred across 2+ sessions in this window._")
+    lines += ["", "## Recurring facts (appear in 2+ sessions)", ""]
+    if not facts:
+        lines.append("_No fact recurred across 2+ sessions in this window._")
+    for kind in KINDS:
+        rows = [(v, n, o) for k, v, n, o in facts if k == kind]
+        if not rows:
+            continue
+        lines += [f"### {FACT_HEADINGS[kind]}", "", "| Fact | Sessions | Times |"]
+        lines.append("|---|---|---|")
+        lines += [f"| {v.replace('|', '/')} | {n} | {o} |" for v, n, o in rows]
+        lines.append("")
     lines += [
         "",
         "## Candidate learnings (review with /dream-report)",
         "",
-        "For each recurring theme, decide ACCEPT / DISCARD / MODIFY and, if "
+        "For each recurring fact, decide ACCEPT / DISCARD / MODIFY and, if "
         "ACCEPTed, append a one-line operational rule under an "
         "`## Accepted for distilled.md` section IN THIS REPORT. /weekly-retro "
         "drains it into learnings/distilled.md by draft PR.",
         "",
     ]
-    lines += [f"- [ ] {word} (seen in {n} sessions) — " for word, n in themes]
+    lines += [f"- [ ] {k}: {v} ({n} sessions) — " for k, v, n, _ in facts]
     lines.append("")
     return "\n".join(lines)
 
@@ -255,11 +250,11 @@ def main() -> None:
         if not summaries:
             print("dream_loop: no session summaries yet, skipping", file=sys.stderr)
         else:
-            entries, themes = aggregate(summaries)
-            patterns_found = len(themes)
+            entries, facts = aggregate(summaries)
+            patterns_found = len(facts)
             DREAM_REPORT_DIR.mkdir(parents=True, exist_ok=True)
             out = DREAM_REPORT_DIR / f"{datetime.now().strftime('%Y%m%d')}.md"
-            out.write_text(render_report(entries, themes), encoding="utf-8")
+            out.write_text(render_report(entries, facts), encoding="utf-8")
             report_path = str(out)
             prune_summaries(all_summaries, int_env("CC_SUMMARY_KEEP", DEFAULT_KEEP))
     except Exception as exc:  # never raise from a hook
