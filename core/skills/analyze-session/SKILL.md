@@ -24,7 +24,7 @@ or known-bad session, then act on the routing.
      report, and take the worst-scored flagged session. If no report exists, say
      so (it is written at SessionEnd once there is session data) and stop.
 2. **Load the Layer-1 evidence** for that session from the report: its score and
-   the specific signals that tripped (cost, cost/turn, failure density,
+   the specific signals that tripped (token outlier, cache rebuilds, failure density,
    correction density, near-duplicates, and — if present — cache ratio / edit
    reject rate). These are the numeric anchors; do not re-derive them by hand.
 3. **Gather the qualitative record** (read-only):
@@ -44,7 +44,7 @@ or known-bad session, then act on the routing.
    | **Session hygiene** | Scope creep, no checkpoint, marathon sessions that should have been split, stale context carried forward. |
    | **Code-review effectiveness** | Edits landed without review/tests; rejected edits (high edit-reject rate); review caught nothing because none ran. |
    | **Tool mastery** | Failure/retry density: blind retries, wrong tool for the job, Edit-string misses, Bash that timed out. |
-   | **Context management** | Cache-busting (low cache ratio), bloated context, cost/turn outliers, re-reading the same files. |
+   | **Context management** | Cache-busting (cache rebuilds, low cache ratio), bloated context, token outliers, re-reading the same files. |
 
 5. **Route each finding** (the point — close the loop, not write a report):
    - prompt-quality issue → `/optimize-prompt` on the offending skill / agent /
