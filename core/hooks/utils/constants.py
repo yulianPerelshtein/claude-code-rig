@@ -48,6 +48,13 @@ SESSION_PERF_DIR = DATA_DIR / "session-perf"
 SESSION_PERF_LOG = DATA_DIR / "session-perf.log"
 TRANSCRIPT_DIR = Path.home() / ".claude" / "projects"
 
+# Subscription plan usage. The statusline is the only place Claude Code hands the
+# 5-hour and weekly limit percentages to user code; it keeps the latest values in
+# PLAN_SNAPSHOT, and the cost_tracker.py Stop hook samples them into COST_LOG once
+# per turn, tagged with the session (NOT project-scoped — the plan is account-wide).
+PLAN_SNAPSHOT = DATA_DIR / "plan-usage.json"
+COST_LOG = Path.home() / ".claude" / "cost-log.jsonl"
+
 
 def get_session_log_dir(session_id: str) -> Path:
     """Get the log directory for a specific session (session_id sanitized)."""

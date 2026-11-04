@@ -21,7 +21,7 @@ modules:
   - {id: playbooks/code-review, status: present, owner: yulianPerelshtein, summary: "code-review playbooks"}
   - {id: playbooks/ai-assisted-coding, status: present, owner: yulianPerelshtein, summary: "AI-assisted-coding playbooks"}
   - {id: core/statusline, status: present, owner: yulianPerelshtein, summary: "rate-limit statusline"}
-  - {id: core-budget, status: present, owner: yulianPerelshtein, summary: "budget config + cost tracker only"}
+  - {id: core-budget, status: present, owner: yulianPerelshtein, summary: "cost tracker only: plan usage per turn"}
   - {id: cc-extensions/all, status: external, owner: third-party, summary: "5 git-cloned skill packages"}
   - {id: cc-extensions/superpowers, status: external, owner: obra, summary: "superpowers skills"}
   - {id: cc-extensions/wshobson-agents, status: external, owner: wshobson, summary: "wshobson agents"}

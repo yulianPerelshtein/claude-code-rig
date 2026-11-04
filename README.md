@@ -72,7 +72,9 @@ Code passes on stdin (no API calls, no network).
 It deliberately shows no dollar figure. `cost.total_cost_usd` is an
 API-equivalent estimate; on a subscription plan it bills nothing and tracks
 nothing you can act on, so the rate-limit percentages are the real budget
-signal.
+signal. The statusline keeps the latest ones in `~/.claude/data/plan-usage.json`;
+the `cost_tracker.py` Stop hook logs them per turn to `~/.claude/cost-log.jsonl`,
+and the session-performance report shows the weekly peaks.
 
 Because a plugin can't register a `statusLine`, enable it by adding to your
 `~/.claude/settings.json`:

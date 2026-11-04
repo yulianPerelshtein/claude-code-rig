@@ -98,11 +98,10 @@ modules:
     copies:
       - {src: "core/statusline/", dest: ".claude/statusline/"}
 
-  # Virtual composite: just the budget config + cost tracker.
+  # Virtual composite: just the cost tracker (subscription plan usage per turn).
   core-budget:
     kind: copy
     copies:
-      - {src: "core/budget.template.json", dest: ".claude/budget.json"}
       - {src: "core/hooks/stop/cost_tracker.py", dest: ".claude/hooks/stop/cost_tracker.py"}
 
   # Installed by install/install-extensions.sh (git clones), not file-copied.

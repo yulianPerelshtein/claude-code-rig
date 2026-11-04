@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for core/hooks/session/session_perf.py — Layer-1 deterministic scorer.
 
-Covers the no-op contract (no data), flagging by each signal (token outlier,
+Covers the no-op contract (no data), flagging by each signal (cost outlier,
 cache rebuilds, failure density, correction density, near-duplicate prompts), the
 one-JSONL-line-per-invocation telemetry, the window filter, optional OTel
 enrichment, retention pruning, and the never-raises guarantee. All fixtures land
@@ -73,6 +73,7 @@ def write_transcript(
     calls: list[tuple[str, int, int]],
     subagent: bool = False,
     lines_per_call: int = 1,
+    model: str = "claude-opus-5-5",
 ) -> Path:
     """Write a Claude Code transcript: one (requestId, cache_write, cache_read) per
     API call, each written lines_per_call times as streaming does."""
@@ -95,7 +96,11 @@ def write_transcript(
                 rec = {
                     "type": "assistant",
                     "requestId": request_id,
-                    "message": {"id": f"msg-{request_id}", "usage": usage},
+                    "message": {
+                        "id": f"msg-{request_id}",
+                        "model": model,
+                        "usage": usage,
+                    },
                 }
                 fh.write(json.dumps(rec) + "\n")
     return path
@@ -158,9 +163,13 @@ def test_clean_sessions_not_flagged(tmp_path):
     for s in ("a", "b", "c"):
         write_prompts(tmp_path, s, ["implement the feature cleanly", "add tests"])
         write_transcript(tmp_path, s, [(f"{s}-r1", 20_000, 50_000)])
+    # A call from a model the price table lacks is reported, not silently free.
+    write_transcript(tmp_path, "c", [("c-r2", 1_000, 0)], model="claude-new-9")
     run_hook(tmp_path, {"reason": "clear"})
     assert telemetry(tmp_path)[-1]["sessions_flagged"] == 0
-    assert "No inefficient sessions flagged" in report_text(tmp_path)
+    body = report_text(tmp_path)
+    assert "No inefficient sessions flagged" in body
+    assert "1 API call(s) came from a model with no price" in body
 
 
 def test_flags_correction_density(tmp_path):
@@ -187,9 +196,9 @@ def test_flags_failure_density(tmp_path):
     assert "learnings/distilled.md" in body
 
 
-def test_flags_token_outlier_counting_subagents(tmp_path):
-    # Cohort of light sessions + one whose subagent read 5M tokens -> flagged;
-    # its main transcript alone is as light as the others.
+def test_flags_cost_outlier_counting_subagents(tmp_path):
+    # Cohort of light sessions + one whose subagent read 5M tokens -> flagged at
+    # API list price; its main transcript alone is as light as the others.
     for s in ("light1", "light2", "light3", "heavy"):
         write_prompts(tmp_path, s, ["normal work here please"])
         write_transcript(tmp_path, s, [(f"{s}-r1", 10_000, 40_000)])
@@ -198,7 +207,7 @@ def test_flags_token_outlier_counting_subagents(tmp_path):
     body = report_text(tmp_path)
     assert telemetry(tmp_path)[-1]["sessions_flagged"] == 1
     assert "heavy" in body
-    assert "token outlier" in body
+    assert "cost outlier" in body
 
 
 def test_flags_cache_rebuilds_once_per_call(tmp_path):
@@ -349,3 +358,32 @@ def test_otel_bad_metric_does_not_crash_scan(tmp_path):
     line = telemetry(tmp_path)[-1]
     assert line["error"] == ""
     assert line["sessions_scored"] == 1
+
+
+def test_report_header_shows_this_week_and_earlier_peaks(tmp_path):
+    # Plan rows from two weekly windows: the header shows the newest window's
+    # latest percentage and the earlier window's peak, not its last value.
+    write_prompts(tmp_path, "sess-1", ["build the parser", "no", "fix it"])
+    log = tmp_path / ".claude" / "cost-log.jsonl"
+    rows = [
+        ("2026-10-27T10:00:00", 61, 1761800000),
+        ("2026-10-29T10:00:00", 88, 1761800000),
+        ("2026-10-30T10:00:00", 70, 1761800000),
+        ("2026-11-03T10:00:00", 12, 1762400000),
+        ("2026-11-04T10:00:00", 34, 1762400000),
+    ]
+    log.write_text(
+        "".join(
+            json.dumps(
+                {"session_id": "s", "timestamp": ts, "plan_week_pct": pct,
+                 "plan_week_resets_at": resets}
+            )
+            + "\n"
+            for ts, pct, resets in rows
+        ),
+        encoding="utf-8",
+    )
+    run_hook(tmp_path, {"reason": "clear"})
+    body = report_text(tmp_path)
+    assert "Plan usage: this week 34%" in body
+    assert "earlier weeks peaked at 88%" in body
