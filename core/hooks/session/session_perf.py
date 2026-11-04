@@ -10,7 +10,8 @@ diagnosis is the on-demand /analyze-session skill (Layer 2); this hook only flag
 
 Inputs (all already bounded by their writers):
   - prompt JSONL   (LOG_DIR/user_prompt_submit.jsonl)  -> turns, corrections, near-dups
-  - transcripts    (~/.claude/projects/*/<sid>.jsonl, subagents) -> tokens, rebuilds
+  - transcripts    (~/.claude/projects/*/<sid>.jsonl, subagents) -> API $, rebuilds
+  - cost log       (~/.claude/cost-log.jsonl, plan usage per turn) -> report header
   - failure JSONL  (LOG_DIR/<sid>/post_tool_use_failure.jsonl) -> tool-failure density
   - OTel metrics   (optional, $CC_OTEL_METRICS_FILE)   -> cache ratio, edit reject rate
 
@@ -33,13 +34,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.constants import (  # noqa: E402
+    COST_LOG,
     LOG_DIR,
     SESSION_PERF_DIR,
     SESSION_PERF_LOG,
-    TRANSCRIPT_DIR,
-    safe_session_id,
 )
 from utils.hooklib import append_jsonl, int_env, read_payload  # noqa: E402
+from utils.transcript_usage import session_usage  # noqa: E402
 
 DEFAULT_WINDOW_DAYS = 7
 DEFAULT_TOP = 5
@@ -65,16 +66,10 @@ WS_RE = re.compile(r"\s+")
 # context (a /model switch, a resume, or an hour idle in a long session). At 100k
 # most sessions of a week qualify; at 500k the worst few do.
 REBUILD_TOKENS = 500_000
-USAGE_FIELDS = (
-    "input_tokens",
-    "cache_creation_input_tokens",
-    "cache_read_input_tokens",
-    "output_tokens",
-)
 
 # Flag thresholds + weights (transparent, deterministic). A session is flagged
 # when score > 0. Weights only order the report; the raw numbers are shown too.
-TOKEN_SIGMA = 1.5  # token outlier = mean + 1.5*std across the cohort
+COST_SIGMA = 1.5  # cost outlier = mean + 1.5*std across the cohort
 MIN_REBUILDS = 3
 FAIL_DENSITY_HIGH = 0.5
 MIN_FAILURES = 3
@@ -83,7 +78,7 @@ MIN_CORRECTIONS = 2
 MIN_DUP = 2
 CACHE_LOW = 0.5  # OTel only
 EDIT_REJECT_HIGH = 0.4  # OTel only
-W_TOKENS = 3
+W_COST = 3
 W_REBUILD = 2
 W_FAIL = 3
 W_CORR = 2
@@ -92,7 +87,7 @@ W_CACHE = 1
 W_EDIT = 1
 
 # Routing targets (the point of #30 — close the loop, not just a dashboard).
-R_TOKENS = "review context budget (context-budget-policy / otel-insights-review)"
+R_COST = "review context budget (context-budget-policy / otel-insights-review)"
 R_REBUILD = "hand off to a new session instead of /model or resume in a long context"
 R_FAIL = "recurring-failure rule -> learnings/distilled.md via /dream-report"
 R_CORR = "/optimize-prompt on the driving skill/agent; maybe a skill candidate"
@@ -148,76 +143,30 @@ def read_prompts() -> dict[str, list[dict]]:
     return by_session
 
 
-def _call_usages(path: Path) -> dict[str, dict]:
-    """requestId -> the usage record of one API call in a transcript.
-
-    Streaming writes one line per content block, all with the same requestId;
-    the last carries the final output_tokens, so the max is kept."""
-    calls: dict[str, dict] = {}
-    try:
-        with path.open(encoding="utf-8", errors="replace") as fh:
-            for line in fh:
-                if '"usage"' not in line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except (json.JSONDecodeError, ValueError):
-                    continue
-                msg = rec.get("message") if isinstance(rec, dict) else None
-                usage = msg.get("usage") if isinstance(msg, dict) else None
-                key = rec.get("requestId") or (msg or {}).get("id")
-                if not isinstance(usage, dict) or not key:
-                    continue
-                kept = calls.get(key)
-                if kept is None or _int(usage, "output_tokens") >= _int(
-                    kept, "output_tokens"
-                ):
-                    calls[key] = usage
-    except OSError:
-        pass
-    return calls
-
-
-def _int(usage: dict, field: str) -> int:
-    value = usage.get(field)
-    return value if isinstance(value, int) else 0
-
-
-def read_usage(session_ids: set[str]) -> dict[str, dict[str, int]]:
-    """session_id -> {"tokens", "rebuilds"} from its Claude Code transcripts.
-
-    tokens counts the main transcript and its subagents; rebuilds counts main-thread
-    calls that wrote REBUILD_TOKENS or more to the cache. A resumed session replays
-    earlier calls into its new file, so each requestId is counted once, for the
-    oldest file that holds it. Sessions without a transcript are absent."""
-    files: list[tuple[float, str, Path, bool]] = []
-    for sid in session_ids:
-        if safe_session_id(sid) != sid:
+def plan_summary() -> str:
+    """One line on subscription plan usage from the cost log: the current weekly
+    window's latest percentage and the peaks of up to four earlier windows. Empty
+    when the log holds no plan rows (no statusline, or not a subscription)."""
+    peaks: dict[float, tuple[str, float]] = {}
+    for rec in iter_jsonl(COST_LOG):
+        if not isinstance(rec, dict):
             continue
-        for path in TRANSCRIPT_DIR.glob(f"*/{sid}.jsonl"):
-            files.append((_mtime(path), sid, path, True))
-        for path in TRANSCRIPT_DIR.glob(f"*/{sid}/subagents/*.jsonl"):
-            files.append((_mtime(path), sid, path, False))
-    files.sort(key=lambda f: f[0])
-    seen: set[str] = set()
-    usage: dict[str, dict[str, int]] = {}
-    for _, sid, path, is_main in files:
-        slot = usage.setdefault(sid, {"tokens": 0, "rebuilds": 0})
-        for key, call in _call_usages(path).items():
-            if key in seen:
-                continue
-            seen.add(key)
-            slot["tokens"] += sum(_int(call, f) for f in USAGE_FIELDS)
-            if is_main and _int(call, "cache_creation_input_tokens") >= REBUILD_TOKENS:
-                slot["rebuilds"] += 1
-    return usage
-
-
-def _mtime(path: Path) -> float:
-    try:
-        return path.stat().st_mtime
-    except OSError:
-        return 0.0
+        pct, resets = rec.get("plan_week_pct"), rec.get("plan_week_resets_at")
+        if not isinstance(pct, (int, float)) or not isinstance(resets, (int, float)):
+            continue
+        ts = str(rec.get("timestamp", ""))
+        last_ts, peak = peaks.get(resets, ("", 0.0))
+        peaks[resets] = (max(ts, last_ts), max(float(pct), peak))
+    if not peaks:
+        return ""
+    windows = sorted(peaks.items(), key=lambda kv: kv[1][0])
+    resets, (_, now_pct) = windows[-1]
+    when = datetime.fromtimestamp(resets).strftime("%Y-%m-%d %H:%M")
+    line = f"Plan usage: this week {now_pct:.0f}% (resets {when})"
+    earlier = [f"{peak:.0f}%" for _, (_, peak) in windows[-5:-1]]
+    if earlier:
+        line += f"; earlier weeks peaked at {', '.join(earlier)}"
+    return line + "."
 
 
 def read_failures(cutoff: datetime) -> dict[str, int]:
@@ -336,6 +285,8 @@ def session_signals(
         "session_id": sid,
         "turns": turns,
         "tokens": usage.get("tokens", 0),
+        "api_usd": round(usage.get("api_usd", 0.0), 2),
+        "unpriced_calls": usage.get("unpriced_calls", 0),
         "rebuilds": usage.get("rebuilds", 0),
         "corrections": corrections,
         "correction_density": round(corrections / denom, 3),
@@ -347,14 +298,15 @@ def session_signals(
     return sig
 
 
-def token_outlier_threshold(tokens: list[int]) -> float:
-    """Cohort mean + TOKEN_SIGMA*std over the positive token counts; inf if too few."""
-    positive = [t for t in tokens if t > 0]
+def cost_outlier_threshold(costs: list[float]) -> float:
+    """Cohort mean + COST_SIGMA*std over the positive API-equivalent costs; inf if
+    too few."""
+    positive = [c for c in costs if c > 0]
     if len(positive) < 2:
         return float("inf")
     mean = sum(positive) / len(positive)
-    var = sum((t - mean) ** 2 for t in positive) / len(positive)
-    return mean + TOKEN_SIGMA * (var**0.5)
+    var = sum((c - mean) ** 2 for c in positive) / len(positive)
+    return mean + COST_SIGMA * (var**0.5)
 
 
 def _millions(tokens: float) -> str:
@@ -362,8 +314,11 @@ def _millions(tokens: float) -> str:
 
 
 # Reason builders for the rule table.
-def _reason_tokens(s: dict, c: float) -> str:
-    return f"token outlier: {_millions(s['tokens'])} (cohort cutoff {_millions(c)})"
+def _reason_cost(s: dict, c: float) -> str:
+    return (
+        f"cost outlier: ${s['api_usd']:.2f} at API list price "
+        f"(cohort cutoff ${c:.2f})"
+    )
 
 
 def _reason_rebuild(s: dict, _c: float) -> str:
@@ -402,10 +357,10 @@ def _reason_edit(s: dict, _c: float) -> str:
 # Transparent rule table: (predicate, weight, reason builder, routing target).
 _RULES = [
     (
-        lambda s, c: s["tokens"] > 0 and s["tokens"] > c,
-        W_TOKENS,
-        _reason_tokens,
-        R_TOKENS,
+        lambda s, c: s["api_usd"] > 0 and s["api_usd"] > c,
+        W_COST,
+        _reason_cost,
+        R_COST,
     ),
     (
         lambda s, _c: s["rebuilds"] >= MIN_REBUILDS,
@@ -449,15 +404,15 @@ _RULES = [
 ]
 
 
-def evaluate(sig: dict, token_cut: float) -> tuple[int, list[tuple[str, str]]]:
+def evaluate(sig: dict, cost_cut: float) -> tuple[int, list[tuple[str, str]]]:
     """Return (score, [(reason, routing)]) by running the transparent rule table.
     A session is flagged when score > 0; the raw numbers are surfaced too."""
     flags: list[tuple[str, str]] = []
     score = 0
     for applies, weight, reason, route in _RULES:
-        if applies(sig, token_cut):
+        if applies(sig, cost_cut):
             score += weight
-            flags.append((reason(sig, token_cut), route))
+            flags.append((reason(sig, cost_cut), route))
     return score, flags
 
 # --- gather + window -------------------------------------------------------
@@ -491,7 +446,7 @@ def gather(window_days: int, otel: dict) -> dict[str, dict]:
         if seen is not None and seen < cutoff:
             continue
         in_window.append(sid)
-    usage = read_usage(set(in_window))
+    usage = session_usage(set(in_window), REBUILD_TOKENS)
     dup_index = duplicate_index(prompts)
     return {
         sid: session_signals(
@@ -511,7 +466,7 @@ def gather(window_days: int, otel: dict) -> dict[str, dict]:
 
 def render_report(
     flagged: list[tuple[dict, int, list[tuple[str, str]]]],
-    scored: int,
+    all_sessions: list[dict],
     window_days: int,
     top: int,
     otel_on: bool,
@@ -520,14 +475,26 @@ def render_report(
     lines = [
         f"# Session performance — {datetime.now().strftime('%Y-%m-%d %H:%M')}",
         "",
-        f"Deterministic inefficiency scan over {scored} session(s) active in the "
+        f"Deterministic inefficiency scan over {len(all_sessions)} session(s) "
+        "active in the "
         f"last {window_days} day(s), from the session transcripts and the rig's "
         f"own logs (post_tool_use_failure.jsonl, the prompt JSONL; {otel_note}). "
         "**No LLM "
         "ran.** Run `/analyze-session <session-id>` for a qualitative "
-        "what-failed-where diagnosis of any flagged session below.",
+        "what-failed-where diagnosis of any flagged session below. API $ is list "
+        "price: it ranks sessions, a subscription bills nothing by it.",
         "",
     ]
+    plan = plan_summary()
+    if plan:
+        lines += [plan, ""]
+    unpriced = sum(s.get("unpriced_calls", 0) for s in all_sessions)
+    if unpriced:
+        lines += [
+            f"{unpriced} API call(s) came from a model with no price in "
+            "`utils/transcript_usage.py` PRICES and count as $0; add its rates.",
+            "",
+        ]
     if not flagged:
         lines += [
             "## No inefficient sessions flagged",
@@ -540,12 +507,13 @@ def render_report(
     lines += [
         "## Flagged sessions (worst first)",
         "",
-        "| Session | Score | Tokens | Turns | Rebuilds | Corr. | Fail | Dup |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Session | Score | API $ | Tokens | Turns | Rebuilds | Corr. | Fail | Dup |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for sig, score, _ in flagged:
         lines.append(
-            f"| `{sig['session_id']}` | {score} | {_millions(sig['tokens'])} | "
+            f"| `{sig['session_id']}` | {score} | {sig['api_usd']:.2f} | "
+            f"{_millions(sig['tokens'])} | "
             f"{sig['turns']} | {sig['rebuilds']} | {sig['corrections']} | "
             f"{sig['failures']} | {sig['dup_prompts']} |"
         )
@@ -605,12 +573,12 @@ def main() -> None:
         if not sessions:
             print("session_perf: no session data yet, skipping", file=sys.stderr)
         else:
-            token_cut = token_outlier_threshold(
-                [s["tokens"] for s in sessions.values()]
+            cost_cut = cost_outlier_threshold(
+                [s["api_usd"] for s in sessions.values()]
             )
             evaluated = []
             for sig in sessions.values():
-                score, reasons = evaluate(sig, token_cut)
+                score, reasons = evaluate(sig, cost_cut)
                 if score > 0:
                     evaluated.append((sig, score, reasons))
             evaluated.sort(key=lambda t: (-t[1], t[0]["session_id"]))
@@ -619,7 +587,7 @@ def main() -> None:
             out = SESSION_PERF_DIR / f"{datetime.now().strftime('%Y%m%d')}.md"
             out.write_text(
                 render_report(
-                    evaluated, sessions_scored, window_days, top, bool(otel)
+                    evaluated, list(sessions.values()), window_days, top, bool(otel)
                 ),
                 encoding="utf-8",
             )

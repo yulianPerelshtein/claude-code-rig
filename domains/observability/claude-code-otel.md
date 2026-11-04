@@ -88,12 +88,14 @@ CLI reads the on-disk transcripts:
 npx ccusage@latest          # daily token/cost rollup from ~/.claude transcripts
 ```
 
-Pair it with the rig's own `cost_tracker.py` Stop hook + the statusline for the
-at-a-glance view; use OTel when you want history, dashboards, or org-wide
-aggregation. In-session, `/cost` shows the current session's spend.
+Pair it with the rig's own `cost_tracker.py` Stop hook (subscription plan usage
+per turn) + the statusline for the at-a-glance view; use OTel when you want
+history, dashboards, or org-wide aggregation. In-session, `/cost` shows the
+current session's API-equivalent spend.
 
 ## See also
 
 - `playbooks/observability/otel-insights-review.md` — the review cadence.
 - `core/statusline/` — the real-time statusline (rate_limits; no cost figure).
-- `core/hooks/stop/cost_tracker.py` — the per-session cost log this complements.
+- `core/hooks/stop/cost_tracker.py` — the per-turn plan-usage log this complements.
+- `core/hooks/utils/transcript_usage.py` — API-equivalent cost per session from transcripts.

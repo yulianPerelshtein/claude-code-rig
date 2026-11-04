@@ -10,7 +10,8 @@ render empty session/weekly segments, which is the correct behaviour there.
 No dollar figure is emitted. Claude Code's ``cost.total_cost_usd`` is an
 API-equivalent estimate; on a subscription plan it bills nothing and tracks
 nothing the user can act on. The rate-limit percentages below are the real
-budget signal.
+budget signal, so they are also kept in ``PLAN_SNAPSHOT`` for the cost_tracker.py
+Stop hook to log (hooks never receive them).
 
 Output (single line, ``|``-delimited, consumed by statusline.sh):
 
@@ -24,6 +25,9 @@ from pathlib import Path
 
 # Mid-stream output-token suppression state (see get_stable_out).
 STATE_FILE = Path.home() / ".claude" / "statusline-state.json"
+# Latest plan usage; same path as PLAN_SNAPSHOT in core/hooks/utils/constants.py
+# (the statusline runs from the checkout, the hooks from the plugin cache).
+PLAN_SNAPSHOT = Path.home() / ".claude" / "data" / "plan-usage.json"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -80,6 +84,29 @@ def get_stable_out(out_raw: int) -> int:
     return result
 
 
+def save_plan_snapshot(five_hour: dict, seven_day: dict) -> None:
+    """Keep the latest plan percentages in PLAN_SNAPSHOT; rewrite only on change.
+
+    Never raises: the statusline must render whatever happens to the file."""
+    snapshot = {
+        "five_hour": {k: five_hour.get(k) for k in ("used_percentage", "resets_at")},
+        "seven_day": {k: seven_day.get(k) for k in ("used_percentage", "resets_at")},
+    }
+    try:
+        if json.loads(PLAN_SNAPSHOT.read_text()).get("plan") == snapshot:
+            return
+    except Exception:
+        pass
+    try:
+        PLAN_SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
+        tmp = PLAN_SNAPSHOT.with_suffix(".tmp")
+        payload = {"updated": datetime.now(timezone.utc).isoformat(), "plan": snapshot}
+        tmp.write_text(json.dumps(payload))
+        tmp.replace(PLAN_SNAPSHOT)
+    except Exception:
+        pass
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 
@@ -123,6 +150,8 @@ def main() -> None:
     if sd:
         pct = round(sd.get("used_percentage", 0))
         weekly_str = f"{pct}%{fmt_time_remaining(sd.get('resets_at'))}"
+    if fh or sd:
+        save_plan_snapshot(fh, sd)
 
     print(
         f"{used}|{bar}|{fmt_tokens(total_in)}|{fmt_tokens(out_tok)}"
