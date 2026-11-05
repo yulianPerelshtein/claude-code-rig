@@ -47,6 +47,13 @@ def test_team_renders_session_and_weekly(tmp_path):
     assert fields[4].startswith("36%")  # five_hour session
     assert fields[5].startswith("15%")  # seven_day weekly
     assert fields[6] == "sonnet"  # model, lowercased
+    # The plan figures are kept for the cost tracker; the dollar field is not.
+    saved = tmp_path / ".claude" / "data" / "plan-usage.json"
+    snapshot = json.loads(saved.read_text())
+    five_hour = {"used_percentage": 36, "resets_at": 1719864000}
+    assert snapshot["plan"]["five_hour"] == five_hour
+    assert snapshot["plan"]["seven_day"]["used_percentage"] == 15
+    assert "0.83" not in json.dumps(snapshot)
 
 
 def test_bedrock_renders_empty_rate_limit_segments(tmp_path):
@@ -55,6 +62,7 @@ def test_bedrock_renders_empty_rate_limit_segments(tmp_path):
     assert fields[4] == ""  # no five_hour -> empty session
     assert fields[5] == ""  # no seven_day -> empty weekly
     assert fields[8] == "feature/x"  # worktree branch still rendered
+    assert not (tmp_path / ".claude" / "data" / "plan-usage.json").exists()
 
 
 def test_mid_stream_only_five_hour(tmp_path):

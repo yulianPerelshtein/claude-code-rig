@@ -12,7 +12,8 @@ you run `/dream-report`.
    `~/.claude/data/session-summaries/<date>-<session-id>.md`.
 2. **`core/hooks/session/dream_loop.py`** — runs right after (also wired on
    SessionEnd; can also be a cron/systemd job). Reads the recent summaries,
-   surfaces recurring themes deterministically, and writes
+   lists the facts that recur across their transcripts (tool-failure classes,
+   files edited, skills and subagents used) deterministically, and writes
    `~/.claude/data/dream-reports/<date>.md`. It does **no** model inference.
 
 The model-side synthesis is the `/dream-report` skill, run weekly.
@@ -45,7 +46,7 @@ never leave the machine, but if you don't want that captured at all, set
 
 ## Review cadence
 
-Weekly. Run `/dream-report`, triage each candidate theme (ACCEPT / DISCARD /
+Weekly. Run `/dream-report`, triage each recurring fact (ACCEPT / DISCARD /
 MODIFY), and let ACCEPTed entries flow into the report's `## Accepted for
 distilled.md` section (drained by `/weekly-retro`) with a
 `# from dream-report <date>` provenance line. See
