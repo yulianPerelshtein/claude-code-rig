@@ -64,6 +64,23 @@ HOW TO RATE A FINDING
 - checked_and_sound: what you checked and found correct. not_checked: what you
   could not verify, and why.
 - verdict: mergeable, mergeable-after-fixes or not-mergeable.
+
+HOW TO WRITE A FINDING
+- claim quotes the offending line and says what is wrong in one sentence; the
+  consequence in this codebase goes with it, not the general principle.
+- failure_scenario is an example anyone can replay: a concrete input, or a
+  one-line edit someone will plausibly make -> the wrong result. Say "no test
+  fails" when nothing would catch it.
+- fix is a signature or at most five lines; end it with "Also at:" naming every
+  other line, docstring and manifest paragraph the same issue touches.
+- Look for a second copy of a rule: a predicate, constant or comment that
+  restates an order or membership living elsewhere (a registry, an enum, a
+  dispatch table). Report what ties the two, or that nothing does.
+- A value computed before a call, behind a predicate: ask which case needs it
+  before the call. If none, say so; a callable read on demand usually removes
+  the predicate.
+- The same expensive call made twice in one flow is a finding even when one
+  call predates the diff; name both sites.
 ```
 
 ## Slot guide
