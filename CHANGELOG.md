@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5]
+
+### Changed
+
+- **The Codex reviewer prompt says how to write a finding.** A new block in
+  `codex-snapshot-review/prompt-template.md`: the claim quotes the line and
+  names the consequence in this codebase, the failure scenario is an example
+  anyone can replay (a concrete input or a one-line edit, with "no test fails"
+  when nothing catches it), the fix ends with every other place the issue
+  touches, and three checks the team reviewer runs: a second copy of a rule
+  that lives elsewhere, a value computed before the call behind a predicate,
+  and the same expensive call made twice in one flow.
+
 ## [0.1.4]
 
 ### Fixed
