@@ -270,3 +270,15 @@ A `git push --delete` of a branch that open PRs use as base closed them, even af
 ## 2026-10-04 WSL2-GITHUB-DNS-FLAKE
 
 Under WSL2, `Could not read from remote repository` or gh's `error connecting to api.github.com` is usually a DNS drop, not auth. Run `getent hosts github.com`, retry once, and touch SSH keys only if `ssh -T git@github.com` fails. For an outward write, check whether it landed before retrying.
+
+## 2026-11-08 FAILED-CD-RUNS-THE-REST-IN-PLACE
+
+In one Bash call, `cd <dir> && <a>; <b>` runs `<b>` in the previous directory when the `cd` fails, so a write after the `;` lands in whatever checkout the shell was in (a stray `git merge` on a main checkout, undone with `git reset --keep`, never `--hard`). Address the target instead: `git -C <path>`, absolute paths, or `set -e` plus a `pwd` check at the top. See `core/default-workflows.md` Tool usage.
+
+## 2026-11-08 MOVED-MODULE-CHECK-OPEN-PRS-BEFORE-READY
+
+Before a PR that moves or renames a widely imported module is called ready, fetch every open PR (`git fetch origin pull/N/head:refs/remotes/origin/pr/N`) and check each: `git merge-tree --write-tree --name-only <mine> <theirs>` for text conflicts, then `gh pr diff N | grep '^+' | grep '<old path>'` for new imports of the old path, which git merges silently and which fail only at import time. Rerun with `-X no-renames`: GitHub's merge paired fewer renames than git, so a merge git finds clean showed as dirty on GitHub and ran no PR workflow; when renames-off conflicts, rebase so the edit lands in the renamed file. Write the merge order and fix-ups into the handoff; never rebase or comment on the other branches.
+
+## 2026-11-08 REVIEWER-BRIEF-ARTIFACT-NOT-CONCLUSIONS
+
+Brief a critic or reviewer agent with the diff (or a frozen snapshot), the ticket and the docs the change claims to satisfy, never your intent or the trade-offs you already settled: an agent handed your conclusions confirms them. Ask a design reviewer to test every PR-body claim against the diff ("behaviour unchanged" included) and to name work nothing reads; ask a test reviewer to state, for each suggestion it drops, the failure that test would have caught. See `domains/ai-assisted-coding/parallel-agent-orchestration.md`.
