@@ -34,6 +34,13 @@ that only matched line-leading `@` once reported "all 2 Layer-1 files loaded"
 for a five-file chain — it could not fail, so it passed, and the guarantee it
 was supposed to protect was broken the whole time.
 
+The stash recipe assumes the fix is the file's only uncommitted change. When
+the file carries other uncommitted edits, stash and `git checkout -- <file>`
+revert those too: apply the mutation by exact-text replace, undo it by the
+reverse replace, and check the file hash matches the start. Run the pass without
+`-x`: if a test already fails for an unrelated reason, fail-fast stops there,
+before the test meant to catch the mutation, and the row reads as caught.
+
 ## Never mask a failing test
 
 No `xfail`, no `skip`, no loosened assertion to get a green run. A failing test
