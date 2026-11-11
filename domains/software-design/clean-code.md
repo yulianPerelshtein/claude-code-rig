@@ -97,6 +97,13 @@ wrapper" jumps straight past rungs 2–3 to a maintained dependency and a shallo
 module. The ladder is a reflex, not a research project — spend seconds on it,
 not an afternoon.
 
+Stored data gets the hardest rung-1 test. A table, column or JSON key that
+nothing reads yet, or that a rule can derive from columns that already exist,
+is not added; the schema proposal lists what each new field is for, says what
+was dropped and why, and measures size before calling anything cheap. A
+speculative field costs a migration to add, another to remove, and every reader
+in between.
+
 ## What we explicitly reject
 
 The metric-chasing dogma is **not** rig policy:

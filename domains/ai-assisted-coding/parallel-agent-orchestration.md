@@ -48,4 +48,22 @@ permission classifier blocks some of these writes, not all.
 - Such a fork cannot call the Agent tool. Launch parallel forks from the
   top-level session, in one message.
 
+## Brief a reviewer with the artifact, not your conclusions
+
+A review agent given the author's intent, plan reading or trade-offs confirms
+them; given only the diff and the spec, it judges them. Per-step critic runs
+briefed with the author's conclusions missed three gaps that the same agents
+found once they judged the final diff against the PR body's claims.
+
+- Hand over the diff (or a frozen snapshot worktree), the ticket and the docs
+  the change claims to satisfy. Leave out your hypothesis, your reading of the
+  plan and the trade-offs you already settled.
+- Ask a design reviewer to test every claim in the PR body against the diff,
+  "behaviour unchanged" included, and to name work the change does that
+  nothing reads.
+- Ask a test reviewer to state, for each suggestion it drops, the end-to-end
+  failure that test would have caught. A dropped suggestion with a real
+  scenario is a should-fix, whatever unit coverage exists elsewhere;
+  `domains/testing-tdd/test-economy.md` asks the same question of every test.
+
 Companion playbook: `playbooks/ai-assisted-coding/parallel-agent-fan-out.md`.
