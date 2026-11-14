@@ -89,11 +89,16 @@ def main() -> None:
     except subprocess.TimeoutExpired:
         sys.exit(0)
 
-    if result.returncode == 1:
+    # dmypy reports every module the file imports; keep the edited file's own lines.
+    rel = os.path.relpath(path, root)
+    own = '\n'.join(
+        line for line in result.stdout.splitlines() if line.startswith(rel + ':')
+    )
+    if result.returncode == 1 and own:
         # Exit 2 is the only PostToolUse code that surfaces stderr to Claude
         # (the tool already ran, so this cannot block — it is advisory feedback).
         # Exit 1 would only show a first-line "hook error" notice to the user.
-        print(f'TYPE ERRORS in {path}:\n{result.stdout.strip()}', file=sys.stderr)
+        print(f'TYPE ERRORS in {path}:\n{own}', file=sys.stderr)
         sys.exit(2)
 
     sys.exit(0)

@@ -108,3 +108,32 @@ def test_a_timeout_skips_the_check_without_an_error(
     code, _ = run_hook(monkeypatch, source, times_out)
     assert code == 0
     assert capsys.readouterr().err == ""
+
+
+@pytest.mark.parametrize(
+    ("report", "code", "shown"),
+    [
+        (
+            "pkg/a.py:1:1: error: own  [misc]\nlib/b.py:2:1: error: imported  [misc]\n",
+            2,
+            ["pkg/a.py:1:1: error: own  [misc]"],
+        ),
+        ("lib/b.py:2:1: error: imported  [misc]\n", 0, []),
+    ],
+    ids=["own-and-imported", "imported-only"],
+)
+def test_only_the_edited_files_own_errors_are_shown(
+    tmp_path, monkeypatch, capsys, report, code, shown
+):
+    """dmypy reports every imported module; only the edited file's own lines show."""
+    source = repo_with(tmp_path / "repo", "a.py")
+
+    def finds(cmd, **kwargs):
+        if "dmypy" in cmd:
+            return subprocess.CompletedProcess(cmd, 1, report, "")
+        return ok(cmd)
+
+    exit_code, _ = run_hook(monkeypatch, source, finds)
+    err = capsys.readouterr().err
+    assert exit_code == code
+    assert [line for line in err.splitlines() if ": error: " in line] == shown
