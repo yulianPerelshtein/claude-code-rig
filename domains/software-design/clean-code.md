@@ -74,6 +74,20 @@ real files showed no element changed type. A third copy, in the storey lookup,
 stayed: it checks every parent where the shared helper takes the first, and that
 edge case is the one the storey lookup exists to handle.
 
+## A convention needs evidence
+
+"The file's convention" is a reason to keep a style only when something shows
+the style is deliberate: names used from outside the module, a documented rule,
+a recorded decision. Without that, the uniformity is a habit, and a reviewer's
+more precise signal wins over it. Grep for outside users before citing
+convention, and say what you found. When taking the reviewer's version would
+leave two styles in one file, fix the whole file in one pass rather than copy
+the habit.
+
+Worked example: a review asked for leading underscores on four new module-local
+constants. The defence was that the older names in the file were public, but a
+grep found an outside user for only one of the seven.
+
 ## The YAGNI ladder
 
 Before writing code, stop at the first rung that holds:

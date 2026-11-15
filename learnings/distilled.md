@@ -270,3 +270,11 @@ A `git push --delete` of a branch that open PRs use as base closed them, even af
 ## 2026-10-04 WSL2-GITHUB-DNS-FLAKE
 
 Under WSL2, `Could not read from remote repository` or gh's `error connecting to api.github.com` is usually a DNS drop, not auth. Run `getent hosts github.com`, retry once, and touch SSH keys only if `ssh -T git@github.com` fails. For an outward write, check whether it landed before retrying.
+
+## 2026-11-15 DB-DRIVER-ERRORS-ECHO-THE-PASSWORD
+
+`psycopg2.connect(<url>)` on a password holding a bare `%` raises `invalid dsn: invalid percent-encoded token: "<the whole password>"` (psycopg2 2.9.9, libpq 16), printing the secret into the transcript. Pass the secret as keyword arguments (`host=`, `user=`, `password=`) or `urllib.parse.quote(pw, safe="")` it into the URL; both fail without echoing it. Never print a driver error raised on secret-bearing input unredacted.
+
+## 2026-11-15 REVIEW-FINDINGS-NOT-TAKEN-GO-IN-THE-RECAP
+
+When you keep code that a reviewer or critic agent flagged, list it in the recap as a decision: what was flagged, what it costs (work, risk, a test gap) and why it stays. A sentence in a doc or manifest is not a report: the human reviewer finds it later and sends it back as a should-fix. If that line is hard to defend, take the fix; a plan rule cited in its defence must apply to the step in hand.
